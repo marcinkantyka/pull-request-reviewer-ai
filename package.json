@@ -1,7 +1,7 @@
 {
     "name": "local-pr-reviewer",
     "version": "1.0.0",
-    "description": "AI-powered PR code review running 100% locally on your M3 Mac - optimized for JavaScript/TypeScript",
+    "description": "AI-powered branch code review running 100% locally on your M3 Mac - optimized for JavaScript/TypeScript",
     "type": "module",
     "main": "dist/index.js",
     "bin": {
@@ -12,8 +12,11 @@
       "dev": "tsc --watch",
       "review": "npm run build && node dist/index.js",
       "setup": "npm install && npm run build",
-      "test": "echo 'No tests yet' && exit 0",
+      "test": "npm run build",
+      "test:ci": "npm install && npm run build",
       "clean": "rm -rf dist node_modules",
+      "rebuild": "./scripts/rebuild.sh",
+      "watch": "./scripts/watch.sh",
       "docker:build": "docker-compose build",
       "docker:up": "docker-compose up -d ollama",
       "docker:down": "docker-compose down",

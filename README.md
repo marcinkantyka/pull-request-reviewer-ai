@@ -29,7 +29,7 @@ cd /path/to/your/repo
 /path/to/pr-reviewer/scripts/review.sh /path/to/your/repo
 ```
 
-That's it! Select a PR from the list and get AI-powered feedback.
+That's it! Select a branch from the list and get AI-powered feedback.
 
 ## Prerequisites
 
@@ -66,11 +66,13 @@ chmod +x scripts/*.sh
 ```
 
 The setup script will:
-1. Check Docker is running
-2. Build Docker containers
-3. Download Qwen2.5-Coder-7B model (~4.7GB)
-4. Verify network isolation
-5. Run test review
+1. Check system requirements (macOS, RAM, disk space)
+2. Check Docker is running
+3. Check Git is installed
+4. Build Docker containers
+5. Download Qwen2.5-Coder-7B model (~4.7GB)
+6. Verify network isolation
+7. Test that the model is responding
 
 ## Usage
 
@@ -88,10 +90,10 @@ cd /path/to/your/repo
 ```
 
 This will:
-1. Fetch all remote branches
+1. Fetch all remote branches (on the host, before mounting)
 2. Show you a list of branches (excluding the base branch)
 3. Let you select which branch to review
-4. Compare the branch against the base branch (via git)
+4. Compare the branch against the base branch (via git, locally)
 5. Analyze the diff with local AI
 6. Save review to `reviews/` folder
 
@@ -161,18 +163,28 @@ Review saved to: /reviews/review-PR1-2026-01-15T10-30-45.md
 
 ```
 pr-reviewer/
+├── .github/
+│   └── workflows/
+│       └── test.yml          # CI/CD tests
 ├── scripts/
 │   ├── setup.sh              # Initial setup
 │   ├── review.sh             # Run reviews
+│   ├── rebuild.sh            # Manual rebuild
+│   ├── watch.sh              # Auto-rebuild on changes
 │   └── verify-isolation.sh   # Security check
 ├── src/
 │   ├── index.ts              # Main entry point
 │   ├── reviewer.ts           # Review logic
-│   ├── github.ts             # GitHub integration
+│   ├── github.ts             # Git branch operations
 │   └── types.ts              # Type definitions
+├── docs/
+│   ├── Security.md           # Security documentation
+│   └── # Troubleshooting Guide  # Troubleshooting
 ├── reviews/                  # Generated reviews
 ├── compose.yaml              # Container config
 ├── Dockerfile                # Container image
+├── package.json              # Node.js dependencies
+├── tsconfig.json             # TypeScript config
 └── README.md                 # This file
 ```
 
@@ -229,7 +241,7 @@ BASE_BRANCH=main
 
 ### Performance on M3 16GB
 
-- **Review Speed**: 20-40 seconds per PR
+- **Review Speed**: 20-40 seconds per branch
 - **Memory Usage**: ~12GB peak
 - **Model Load Time**: ~5 seconds
 - **Disk Usage**: ~7GB total
@@ -289,16 +301,61 @@ See [docs/# Troubleshooting Guide](docs/# Troubleshooting Guide) for more.
 # Update to latest version
 git pull
 
-# Rebuild containers
+# Rebuild everything after code changes
+./scripts/rebuild.sh
+
+# Or rebuild just containers
 docker-compose build
 
 # Update model
 docker-compose exec ollama ollama pull qwen2.5-coder:7b
 ```
 
+## Development
+
+### Running Tests
+
+```bash
+# Run TypeScript compilation check
+npm test
+
+# Or use the CI test script
+npm run test:ci
+```
+
+### Rebuilding After Changes
+
+When you make changes to the code, rebuild the project:
+
+```bash
+# Manual rebuild (TypeScript + Docker)
+./scripts/rebuild.sh
+
+# Auto-rebuild on file changes (requires fswatch)
+./scripts/watch.sh
+```
+
+The `watch.sh` script will:
+- Watch for changes in source files
+- Automatically rebuild TypeScript
+- Automatically rebuild Docker image
+- Install fswatch if needed: `brew install fswatch`
+
+### GitHub Actions
+
+The project includes GitHub Actions workflows that automatically:
+- Test TypeScript compilation on every push and PR
+- Verify build output files
+- Check shell script syntax
+- Build and verify Docker image
+
+See `.github/workflows/test.yml` for details.
+
 ## Contributing
 
 PRs welcome! This tool reviews code—it should be well-reviewed itself.
+
+All contributions are tested automatically via GitHub Actions.
 
 ## License
 

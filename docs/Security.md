@@ -152,7 +152,7 @@ cat compose.yaml | grep -A 5 "networks:"
 }
 ```
 
-**Lock file:** `package-lock.json` ensures deterministic installs
+**Dependencies:** All dependencies are pinned in `package.json` for reproducible installs
 
 **Docker images:**
 - `ollama/ollama:latest` - Official Ollama image
