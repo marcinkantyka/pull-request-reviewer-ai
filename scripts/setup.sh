@@ -156,11 +156,10 @@ if [ $RETRY -eq $MAX_RETRIES ]; then
 fi
 echo ""
 
-echo "Downloading Qwen2.5-Coder-7B model..."
-echo "This may take 5-10 minutes (~4.7GB download)"
-echo ""
-
 MODEL_NAME=${MODEL_NAME:-qwen2.5-coder:7b}
+echo "Downloading model: $MODEL_NAME..."
+echo "This may take 5-10 minutes (size varies by model)"
+echo ""
 "$DOCKER_COMPOSE_CMD" exec -T ollama ollama pull $MODEL_NAME
 
 if [ $? -eq 0 ]; then

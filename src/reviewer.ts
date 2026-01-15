@@ -42,7 +42,8 @@ export class PRReviewer {
       throw new Error('Cannot review empty diff');
     }
 
-    console.log('\nAnalyzing code with Qwen2.5-Coder...\n');
+    const modelDisplayName = this.config.modelName.split(':')[0] || this.config.modelName;
+    console.log(`\nAnalyzing code with ${modelDisplayName}...\n`);
 
     const truncatedDiff = diff.length > 20000 
       ? diff.slice(0, 20000) + '\n\n... (diff truncated for analysis)'

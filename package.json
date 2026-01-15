@@ -21,7 +21,7 @@
       "docker:up": "docker-compose up -d ollama",
       "docker:down": "docker-compose down",
       "docker:logs": "docker-compose logs -f",
-      "model:pull": "docker-compose exec ollama ollama pull qwen2.5-coder:7b",
+      "model:pull": "./scripts/model-pull.sh",
       "model:list": "docker-compose exec ollama ollama list"
     },
     "keywords": [
