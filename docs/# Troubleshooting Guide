@@ -1,0 +1,595 @@
+# Troubleshooting Guide
+
+Common issues and solutions for Local PR Reviewer.
+
+## Table of Contents
+
+- [Installation Issues](#installation-issues)
+- [Docker Issues](#docker-issues)
+- [Ollama Issues](#ollama-issues)
+- [Git Issues](#git-issues)
+- [Performance Issues](#performance-issues)
+- [Review Quality Issues](#review-quality-issues)
+
+---
+
+## Installation Issues
+
+### "Permission denied" when running scripts
+
+**Problem:**
+```bash
+./scripts/setup.sh
+-bash: ./scripts/setup.sh: Permission denied
+```
+
+**Solution:**
+```bash
+chmod +x scripts/*.sh
+```
+
+### "npm: command not found"
+
+**Problem:** Node.js not installed
+
+**Solution:**
+```bash
+# Install Node.js via Homebrew
+brew install node
+
+# Verify installation
+node --version  # Should show v20+
+npm --version
+```
+
+### "docker: command not found"
+
+**Problem:** Docker not installed
+
+**Solution:**
+1. Download Docker Desktop: https://www.docker.com/products/docker-desktop
+2. Install and start Docker Desktop
+3. Verify: `docker --version`
+
+---
+
+## Docker Issues
+
+### "Cannot connect to Docker daemon"
+
+**Problem:**
+```
+Cannot connect to the Docker daemon at unix:///var/run/docker.sock
+```
+
+**Solution:**
+1. Make sure Docker Desktop is running
+2. Check Docker Desktop in your menu bar (macOS)
+3. Restart Docker Desktop if needed
+
+### "Insufficient memory"
+
+**Problem:**
+```
+Error: container killed due to memory limit
+```
+
+**Solution:**
+
+**Option 1: Increase Docker memory**
+1. Docker Desktop → Settings → Resources
+2. Increase Memory to 12GB+
+3. Click "Apply & Restart"
+
+**Option 2: Use smaller model**
+```bash
+# Edit .env
+MODEL_NAME=qwen2.5-coder:3b  # Smaller, uses less RAM
+```
+
+### "Port 11434 already in use"
+
+**Problem:**
+```
+Error: bind: address already in use
+```
+
+**Solution:**
+```bash
+# Find what's using port 11434
+lsof -i :11434
+
+# Kill the process or stop conflicting service
+docker-compose down
+
+# Or change the port in compose.yaml
+ports:
+  - "11435:11434"  # Use different external port
+```
+
+### "Network not found"
+
+**Problem:**
+```
+Error: network local-pr-reviewer_pr-review-network not found
+```
+
+**Solution:**
+```bash
+# Recreate network
+docker-compose down
+docker-compose up -d ollama
+```
+
+---
+
+## Ollama Issues
+
+### "Cannot connect to Ollama"
+
+**Problem:**
+```
+❌ Cannot connect to Ollama
+```
+
+**Solution:**
+```bash
+# Check if Ollama container is running
+docker-compose ps
+
+# If not running, start it
+docker-compose up -d ollama
+
+# Check logs
+docker-compose logs ollama
+
+# Wait for it to be ready
+sleep 10
+
+# Test connection
+docker-compose exec ollama ollama list
+```
+
+### "Model not found"
+
+**Problem:**
+```
+❌ Model "qwen2.5-coder:7b" not found
+```
+
+**Solution:**
+```bash
+# Pull the model manually
+docker-compose exec ollama ollama pull qwen2.5-coder:7b
+
+# List available models
+docker-compose exec ollama ollama list
+
+# If pull fails, check internet connection and try again
+```
+
+### "Model loading is slow"
+
+**Problem:** Model takes 30+ seconds to load
+
+**Solution:**
+```bash
+# This is normal for first load after container restart
+# Subsequent reviews will be faster
+
+# To keep model loaded:
+docker-compose restart ollama  # Restart instead of stopping
+```
+
+### "Out of memory when loading model"
+
+**Problem:**
+```
+Error: failed to load model: insufficient memory
+```
+
+**Solution:**
+
+**Option 1: Use smaller model**
+```bash
+docker-compose exec ollama ollama pull qwen2.5-coder:3b
+# Edit .env: MODEL_NAME=qwen2.5-coder:3b
+```
+
+**Option 2: Close other apps**
+- Close browser tabs
+- Quit unused applications
+- Free up RAM
+
+**Option 3: Increase swap**
+```bash
+# Check current swap
+sysctl vm.swapusage
+
+# macOS manages swap automatically
+# Just ensure you have 20GB+ free disk space
+```
+
+---
+
+## Git Issues
+
+### "Not a git repository"
+
+**Problem:**
+```
+Error: Not a git repository
+```
+
+**Solution:**
+```bash
+# Make sure you're in a git repository
+cd /path/to/your/repo
+
+# Or pass the repository path as an argument
+./scripts/review.sh /path/to/your/repo
+```
+
+### "No branches found to review"
+
+**Problem:**
+```
+No branches found to review
+```
+
+**Possible causes:**
+1. No remote branches exist
+2. Only the base branch exists
+3. Remote branches not fetched
+
+**Solution:**
+```bash
+# Fetch all remote branches
+git fetch origin
+
+# List remote branches
+git branch -r
+
+# Make sure you have branches other than the base branch
+```
+
+### "Failed to get repository info"
+
+**Problem:**
+```
+Failed to get repository info: Could not parse GitHub repository URL
+```
+
+**Solution:**
+```bash
+# Check your git remote
+git remote -v
+
+# Make sure remote.origin.url is set
+git config --get remote.origin.url
+
+# If not set, add it
+git remote add origin https://github.com/owner/repo.git
+```
+
+---
+
+## Performance Issues
+
+### Reviews are very slow (>2 minutes)
+
+**Possible causes:**
+1. Large diff size
+2. Cold start (first review)
+3. Insufficient RAM
+4. CPU throttling
+
+**Solutions:**
+
+**Check diff size:**
+```bash
+# Large diffs (>10,000 lines) will be slower
+# The tool automatically truncates to 20,000 chars
+```
+
+**Warm up the model:**
+```bash
+# First review after restart is always slower
+# Subsequent reviews are 2-3x faster
+```
+
+**Monitor resources:**
+```bash
+# macOS Activity Monitor
+open -a "Activity Monitor"
+
+# Check Docker stats
+docker stats
+```
+
+### System becomes sluggish during review
+
+**Problem:** Entire Mac slows down
+
+**Solution:**
+
+**Reduce Docker memory:**
+```yaml
+# Edit compose.yaml
+deploy:
+  resources:
+    limits:
+      memory: 10G  # Reduce from 12G
+```
+
+**Close other applications:**
+- Chrome/browser tabs
+- Slack
+- Other heavy apps
+
+**Use smaller model:**
+```bash
+MODEL_NAME=qwen2.5-coder:3b  # Much faster, less RAM
+```
+
+---
+
+## Review Quality Issues
+
+### Reviews are too generic
+
+**Problem:** AI doesn't provide specific feedback
+
+**Solutions:**
+
+**Ensure diff has enough context:**
+```bash
+# Check diff size
+git diff origin/main...origin/feature-branch | wc -l
+
+# If very small (<50 lines), reviews may be generic
+```
+
+**Try different prompts:**
+- Edit `src/reviewer.ts`
+- Modify the `buildReviewPrompt()` function
+- Add more specific instructions
+
+**Use larger model:**
+```bash
+# More parameters = better quality
+MODEL_NAME=qwen2.5-coder:14b  # Requires 32GB RAM
+```
+
+### Reviews focus on wrong things
+
+**Problem:** AI nitpicks formatting instead of logic
+
+**Solution:**
+
+Edit the prompt in `src/reviewer.ts`:
+
+```typescript
+- Prioritize critical issues over nitpicks
+- Focus on logic and correctness
+- Ignore minor formatting issues
+```
+
+### AI hallucinates bugs
+
+**Problem:** AI reports bugs that don't exist
+
+**Solution:**
+
+**Increase context:**
+```bash
+# Ensure full diff is included
+# Check truncation warning in output
+```
+
+**Adjust temperature:**
+```bash
+# Lower temperature = more conservative
+TEMPERATURE=0.1  # Default is 0.3
+```
+
+**Verify claims:**
+- Always verify AI findings manually
+- Use AI as a second pair of eyes, not gospel
+
+---
+
+## Network/Security Issues
+
+### "Network isolation verification failed"
+
+**Problem:**
+```
+❌ Network is NOT isolated
+```
+
+**Solution:**
+```bash
+# Recreate network
+docker-compose down
+docker-compose up -d
+
+# Verify
+./scripts/verify-isolation.sh
+```
+
+### Want to verify no data leakage
+
+**Solution:**
+
+**Monitor all network traffic:**
+```bash
+# Terminal 1: Monitor network
+sudo tcpdump -i any -n 'not host 127.0.0.1' -w capture.pcap
+
+# Terminal 2: Run review
+./scripts/review.sh
+
+# Stop tcpdump (Ctrl+C) and analyze
+tcpdump -r capture.pcap
+
+# Should see ZERO traffic from Docker containers
+```
+
+---
+
+## File Permission Issues
+
+### "Cannot write to reviews/ directory"
+
+**Problem:**
+```
+Error: EACCES: permission denied, mkdir '/reviews'
+```
+
+**Solution:**
+```bash
+# Create directory with correct permissions
+mkdir -p reviews
+chmod 755 reviews
+
+# Or fix ownership
+sudo chown -R $USER:staff reviews
+```
+
+### "Cannot read repository"
+
+**Problem:**
+```
+Error: EACCES: permission denied, open '/repo/.git'
+```
+
+**Solution:**
+```bash
+# Make sure Docker has access to your repo
+# Check Docker Desktop → Settings → Resources → File Sharing
+# Ensure your repo directory is listed
+
+# Or explicitly allow in compose.yaml
+volumes:
+  - /path/to/repo:/repo:ro  # Use absolute path
+```
+
+---
+
+## Logs & Debugging
+
+### Enable debug mode
+
+```bash
+# Run with debug output
+DEBUG=1 ./scripts/review.sh
+
+# Or in .env
+echo "DEBUG=1" >> .env
+```
+
+### View Ollama logs
+
+```bash
+# Follow logs in real-time
+docker-compose logs -f ollama
+
+# View last 100 lines
+docker-compose logs --tail=100 ollama
+
+# Search logs
+docker-compose logs ollama | grep error
+```
+
+### View container stats
+
+```bash
+# Real-time resource usage
+docker stats
+
+# Detailed inspection
+docker inspect ollama-pr-reviewer
+```
+
+---
+
+## Still Having Issues?
+
+### Collect diagnostics
+
+```bash
+# System info
+uname -a
+sw_vers  # macOS version
+
+# Docker info
+docker --version
+docker-compose --version
+docker info
+
+# Node.js info
+node --version
+npm --version
+
+# Git
+git --version
+git remote -v
+
+# Disk space
+df -h
+
+# Memory
+vm_stat
+
+# Check logs
+docker-compose logs > full-logs.txt
+```
+
+### Clean slate reset
+
+```bash
+# Nuclear option: Remove everything and start fresh
+
+# Stop containers
+docker-compose down -v
+
+# Remove images
+docker rmi $(docker images -q local-pr-reviewer*)
+
+# Remove node_modules
+rm -rf node_modules dist
+
+# Remove reviews
+rm -rf reviews/*
+
+# Start fresh
+./scripts/setup.sh
+```
+
+### Report an issue
+
+If you can't resolve the issue:
+
+1. Run diagnostics (above)
+2. Create GitHub issue with:
+   - Error message
+   - Steps to reproduce
+   - System info
+   - Relevant logs
+
+---
+
+## Common Error Messages
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| `ECONNREFUSED` | Ollama not running | `docker-compose up -d ollama` |
+| `ENOSPC` | Out of disk space | Free up disk space |
+| `ENOMEM` | Out of memory | Close apps, use smaller model |
+| `ETIMEDOUT` | Network timeout | Check Docker network |
+| `404 model not found` | Model not pulled | `ollama pull qwen2.5-coder:7b` |
+
+---
+
+**Need more help?** Check the main [README.md](../README.md) or open an issue on GitHub.
