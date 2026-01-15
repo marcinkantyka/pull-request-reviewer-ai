@@ -2,6 +2,8 @@
 
 AI-powered code review that runs 100% on your MacBook M3. Zero data leakage. Optimized for JavaScript/TypeScript.
 
+**Version:** 1.0.0 (see [package.json](package.json))
+
 ## Features
 
 - **100% Private** - Code never leaves your machine
@@ -343,13 +345,22 @@ The `watch.sh` script will:
 
 ### GitHub Actions
 
-The project includes GitHub Actions workflows that automatically:
-- Test TypeScript compilation on every push and PR
-- Verify build output files
-- Check shell script syntax
-- Build and verify Docker image
+The project includes GitHub Actions workflows:
 
-See `.github/workflows/test.yml` for details.
+**Test Workflow** (`.github/workflows/test.yml`):
+- Runs on every push and PR
+- Tests TypeScript compilation
+- Verifies build output files
+- Checks shell script syntax
+- Builds and verifies Docker image
+
+**Dependency Check** (`.github/workflows/changelog.yml`):
+- Runs weekly (Sundays) or manually
+- Checks for outdated npm dependencies
+- Audits for security vulnerabilities
+- Results posted as workflow summary
+
+**Note:** README and version information are manually maintained. Version comes from `package.json` (single source of truth).
 
 ## Contributing
 
