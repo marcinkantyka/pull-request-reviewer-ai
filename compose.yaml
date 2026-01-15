@@ -37,13 +37,11 @@ services:
         - linux/arm64  # M3 Mac optimization
     container_name: pr-reviewer-cli
     volumes:
+      # Note: Additional volumes (git config, SSH) are added conditionally in review.sh
       # Mount your git repository (read-only for safety)
       - ${REPO_PATH:-.}:/repo:ro
       # Mount reviews output directory (writable)
       - ./reviews:/reviews
-      # Mount git config for authentication
-      - ${HOME}/.gitconfig:/root/.gitconfig:ro
-      - ${HOME}/.ssh:/root/.ssh:ro
     environment:
       - OLLAMA_HOST=http://ollama:11434
       - REPO_PATH=/repo

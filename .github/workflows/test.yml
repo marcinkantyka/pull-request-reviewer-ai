@@ -55,15 +55,8 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile
-          platforms: linux/amd64
-          push: false
-          tags: pr-reviewer:test
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+        run: |
+          docker build -t pr-reviewer:test -f Dockerfile .
 
       - name: Verify Docker image
         run: |

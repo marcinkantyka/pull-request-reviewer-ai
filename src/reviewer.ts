@@ -32,11 +32,16 @@ export class PRReviewer {
         (m: { name: string }) => m.name === this.config.modelName
       );
     } catch (error) {
-      throw new Error(`Failed to check model: ${error}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to check model: ${errorMessage}`);
     }
   }
 
   async reviewCode(diff: string, prInfo: PRInfo): Promise<string> {
+    if (!diff || diff.trim().length === 0) {
+      throw new Error('Cannot review empty diff');
+    }
+
     console.log('\nAnalyzing code with Qwen2.5-Coder...\n');
 
     const truncatedDiff = diff.length > 20000 
@@ -101,7 +106,7 @@ ${diff}
 **Provide your review in a clear, structured format:**`;
   }
 
-  saveReview(review: string, prInfo: PRInfo, stats: any): string {
+  saveReview(review: string, prInfo: PRInfo, stats: { filesChanged: number; insertions: number; deletions: number }): string {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const filename = `review-PR${prInfo.number}-${timestamp}.md`;
     const filepath = path.join(this.config.reviewsPath, filename);
@@ -119,7 +124,7 @@ ${diff}
   private formatReviewDocument(
     review: string,
     prInfo: PRInfo,
-    stats: any
+    stats: { filesChanged: number; insertions: number; deletions: number }
   ): string {
     const now = new Date();
     

@@ -127,6 +127,13 @@ export class GitHubHelper {
 
   getPRDiff(prBranch: string, baseBranch: string): string {
     try {
+      if (!this.branchExists(prBranch)) {
+        throw new Error(`Branch origin/${prBranch} does not exist`);
+      }
+      if (!this.branchExists(baseBranch)) {
+        throw new Error(`Base branch origin/${baseBranch} does not exist`);
+      }
+
       const diff = execSync(
         `git diff origin/${baseBranch}...origin/${prBranch}`,
         {
@@ -136,14 +143,25 @@ export class GitHubHelper {
         }
       );
 
+      if (!diff || diff.trim().length === 0) {
+        return '';
+      }
       return diff;
     } catch (error) {
-      throw new Error(`Failed to get PR diff: ${error}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to get PR diff: ${errorMessage}`);
     }
   }
 
   getChangedFiles(prBranch: string, baseBranch: string): string[] {
     try {
+      if (!this.branchExists(prBranch)) {
+        throw new Error(`Branch origin/${prBranch} does not exist`);
+      }
+      if (!this.branchExists(baseBranch)) {
+        throw new Error(`Base branch origin/${baseBranch} does not exist`);
+      }
+
       const files = execSync(
         `git diff --name-only origin/${baseBranch}...origin/${prBranch}`,
         {
@@ -157,7 +175,8 @@ export class GitHubHelper {
 
       return files;
     } catch (error) {
-      throw new Error(`Failed to get changed files: ${error}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to get changed files: ${errorMessage}`);
     }
   }
 
@@ -167,6 +186,10 @@ export class GitHubHelper {
     deletions: number;
   } {
     try {
+      if (!this.branchExists(prBranch) || !this.branchExists(baseBranch)) {
+        return { filesChanged: 0, insertions: 0, deletions: 0 };
+      }
+
       const stats = execSync(
         `git diff --shortstat origin/${baseBranch}...origin/${prBranch}`,
         {

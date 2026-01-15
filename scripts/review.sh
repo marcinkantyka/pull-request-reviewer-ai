@@ -54,9 +54,11 @@ if [ ! -f "$COMPOSE_FILE" ]; then
     COMPOSE_FILE="$PROJECT_DIR/docker-compose.yml"
 fi
 
-if ! docker-compose -f "$COMPOSE_FILE" ps | grep ollama | grep -q "Up"; then
+DOCKER_COMPOSE_CMD="$SCRIPT_DIR/docker-compose-wrapper.sh"
+
+if ! "$DOCKER_COMPOSE_CMD" -f "$COMPOSE_FILE" ps | grep ollama | grep -q "Up"; then
     echo "Starting Ollama service..."
-    docker-compose -f "$COMPOSE_FILE" up -d ollama
+    "$DOCKER_COMPOSE_CMD" -f "$COMPOSE_FILE" up -d ollama
     echo "Waiting for Ollama to initialize..."
     sleep 5
 fi
@@ -65,7 +67,7 @@ echo "Checking Ollama status..."
 RETRIES=0
 MAX_RETRIES=10
 while [ $RETRIES -lt $MAX_RETRIES ]; do
-    if docker-compose -f "$COMPOSE_FILE" exec -T ollama ollama list &> /dev/null; then
+    if "$DOCKER_COMPOSE_CMD" -f "$COMPOSE_FILE" exec -T ollama ollama list &> /dev/null; then
         echo -e "${GREEN}Ollama is ready${NC}"
         break
     fi
@@ -76,22 +78,22 @@ done
 
 if [ $RETRIES -eq $MAX_RETRIES ]; then
     echo -e "${RED}Ollama is not responding${NC}"
-    echo "Check logs: docker-compose -f $COMPOSE_FILE logs ollama"
+    echo "Check logs: $DOCKER_COMPOSE_CMD -f $COMPOSE_FILE logs ollama"
     exit 1
 fi
 
 MODEL_NAME=${MODEL_NAME:-qwen2.5-coder:7b}
 echo "Checking for model: $MODEL_NAME..."
-if ! docker-compose -f "$COMPOSE_FILE" exec -T ollama ollama list 2>/dev/null | grep -q "$MODEL_NAME"; then
+if ! "$DOCKER_COMPOSE_CMD" -f "$COMPOSE_FILE" exec -T ollama ollama list 2>/dev/null | grep -q "$MODEL_NAME"; then
     echo -e "${YELLOW}Model not found. Pulling model...${NC}"
     echo "This may take several minutes (~4.7GB download)"
-    docker-compose -f "$COMPOSE_FILE" exec -T ollama ollama pull "$MODEL_NAME"
+    "$DOCKER_COMPOSE_CMD" -f "$COMPOSE_FILE" exec -T ollama ollama pull "$MODEL_NAME"
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}Model pulled successfully${NC}"
     else
         echo -e "${RED}Failed to pull model${NC}"
         echo "You can pull it manually with:"
-        echo "docker-compose -f $COMPOSE_FILE exec ollama ollama pull $MODEL_NAME"
+        echo "$DOCKER_COMPOSE_CMD -f $COMPOSE_FILE exec ollama ollama pull $MODEL_NAME"
         exit 1
     fi
 else
@@ -100,14 +102,24 @@ fi
 
 echo ""
 
-docker-compose -f "$COMPOSE_FILE" run --rm \
-    -e REPO_PATH=/repo \
-    -e REVIEWS_PATH=/reviews \
-    -e MODEL_NAME="$MODEL_NAME" \
-    -e BASE_BRANCH="${BASE_BRANCH:-main}" \
-    -v "$REPO_PATH:/repo:ro" \
-    -v "$PROJECT_DIR/reviews:/reviews" \
-    pr-reviewer
+VOLUME_ARGS=(
+    -e REPO_PATH=/repo
+    -e REVIEWS_PATH=/reviews
+    -e MODEL_NAME="$MODEL_NAME"
+    -e BASE_BRANCH="${BASE_BRANCH:-main}"
+    -v "$REPO_PATH:/repo:ro"
+    -v "$PROJECT_DIR/reviews:/reviews"
+)
+
+if [ -f "$HOME/.gitconfig" ]; then
+    VOLUME_ARGS+=(-v "$HOME/.gitconfig:/root/.gitconfig:ro")
+fi
+
+if [ -d "$HOME/.ssh" ]; then
+    VOLUME_ARGS+=(-v "$HOME/.ssh:/root/.ssh:ro")
+fi
+
+"$DOCKER_COMPOSE_CMD" -f "$COMPOSE_FILE" run --rm "${VOLUME_ARGS[@]}" pr-reviewer
 
 echo ""
 echo -e "${GREEN}Review complete!${NC}"

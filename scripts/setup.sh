@@ -2,6 +2,9 @@
 
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOCKER_COMPOSE_CMD="$SCRIPT_DIR/docker-compose-wrapper.sh"
+
 echo "Local PR Reviewer Setup"
 echo "======================="
 echo ""
@@ -51,7 +54,7 @@ echo -e "${GREEN}Docker is running${NC}"
 echo ""
 
 echo "Checking Docker Compose..."
-if ! docker-compose version &> /dev/null; then
+if ! docker compose version &> /dev/null 2>&1 && ! docker-compose version &> /dev/null; then
     echo -e "${RED}Docker Compose is not installed${NC}"
     echo "Install from: https://docs.docker.com/compose/install/"
     exit 1
@@ -125,19 +128,19 @@ fi
 echo ""
 
 echo "Building Docker images..."
-docker-compose build --pull
+"$DOCKER_COMPOSE_CMD" build --pull
 echo -e "${GREEN}Docker images built${NC}"
 echo ""
 
 echo "Starting Ollama service..."
-docker-compose up -d ollama
+"$DOCKER_COMPOSE_CMD" up -d ollama
 echo "Waiting for Ollama to be ready..."
 sleep 10
 
 MAX_RETRIES=30
 RETRY=0
 while [ $RETRY -lt $MAX_RETRIES ]; do
-    if docker-compose exec -T ollama ollama list &> /dev/null; then
+    if "$DOCKER_COMPOSE_CMD" exec -T ollama ollama list &> /dev/null; then
         echo -e "${GREEN}Ollama is ready${NC}"
         break
     fi
@@ -148,7 +151,7 @@ done
 
 if [ $RETRY -eq $MAX_RETRIES ]; then
     echo -e "${RED}Ollama failed to start${NC}"
-    echo "Check logs: docker-compose logs ollama"
+    echo "Check logs: $DOCKER_COMPOSE_CMD logs ollama"
     exit 1
 fi
 echo ""
@@ -158,7 +161,7 @@ echo "This may take 5-10 minutes (~4.7GB download)"
 echo ""
 
 MODEL_NAME=${MODEL_NAME:-qwen2.5-coder:7b}
-docker-compose exec -T ollama ollama pull $MODEL_NAME
+"$DOCKER_COMPOSE_CMD" exec -T ollama ollama pull $MODEL_NAME
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}Model downloaded successfully${NC}"
@@ -181,7 +184,7 @@ cat > /tmp/test_ollama.txt << 'EOF'
 Write a one-line JavaScript function that returns "Hello, World!"
 EOF
 
-RESPONSE=$(docker-compose exec -T ollama ollama run $MODEL_NAME < /tmp/test_ollama.txt 2>&1 | head -5)
+RESPONSE=$("$DOCKER_COMPOSE_CMD" exec -T ollama ollama run $MODEL_NAME < /tmp/test_ollama.txt 2>&1 | head -5)
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}Model is responding${NC}"
     echo "Sample response: ${RESPONSE:0:60}..."

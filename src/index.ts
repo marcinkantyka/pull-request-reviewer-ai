@@ -169,6 +169,12 @@ class LocalPRReviewerCLI {
         selectedPR.baseBranch || this.config.baseBranch
       );
 
+      if (!diff || diff.trim().length === 0) {
+        console.log('No changes found in diff. Nothing to review.');
+        this.rl.close();
+        return;
+      }
+
       console.log(`Diff size: ${(diff.length / 1024).toFixed(1)} KB\n`);
 
       const shouldReview = await this.confirm('Proceed with AI review?');
@@ -191,7 +197,7 @@ class LocalPRReviewerCLI {
       
       if (reviewAnother) {
         console.log('\n' + '-'.repeat(80) + '\n');
-        await this.run();
+        return this.run();
       } else {
         console.log('\nDone!\n');
       }

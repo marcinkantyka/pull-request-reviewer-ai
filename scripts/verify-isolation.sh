@@ -33,9 +33,11 @@ if [ ! -f "$COMPOSE_FILE" ]; then
     COMPOSE_FILE="$PROJECT_DIR/docker-compose.yml"
 fi
 
+DOCKER_COMPOSE_CMD="$SCRIPT_DIR/docker-compose-wrapper.sh"
+
 echo "2. Testing Ollama container network access..."
-if docker-compose -f "$COMPOSE_FILE" ps | grep ollama | grep -q "Up"; then
-    if docker-compose -f "$COMPOSE_FILE" exec -T ollama ping -c 1 google.com &> /dev/null; then
+if "$DOCKER_COMPOSE_CMD" -f "$COMPOSE_FILE" ps | grep ollama | grep -q "Up"; then
+    if "$DOCKER_COMPOSE_CMD" -f "$COMPOSE_FILE" exec -T ollama ping -c 1 google.com &> /dev/null; then
         echo -e "${RED}Container CAN access internet (SECURITY ISSUE)${NC}"
         exit 1
     else

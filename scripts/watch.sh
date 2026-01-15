@@ -33,7 +33,8 @@ rebuild() {
     fi
     
     echo "Rebuilding Docker image..."
-    if docker-compose build pr-reviewer; then
+    DOCKER_COMPOSE_CMD="$SCRIPT_DIR/docker-compose-wrapper.sh"
+    if "$DOCKER_COMPOSE_CMD" build pr-reviewer; then
         echo -e "${GREEN}Docker build successful${NC}"
     else
         echo -e "${RED}Docker build failed${NC}"
