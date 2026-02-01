@@ -1,6 +1,6 @@
 /**
  * Integration tests placeholder
- * 
+ *
  * Integration tests require a running LLM server and git repository.
  * Add actual integration tests here when ready.
  */
