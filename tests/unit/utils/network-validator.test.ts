@@ -11,7 +11,8 @@ describe('NetworkValidator', () => {
     it('should allow localhost endpoints', () => {
       expect(() => validateEndpoint('http://localhost:11434', ['localhost'])).not.toThrow();
       expect(() => validateEndpoint('http://127.0.0.1:11434', ['127.0.0.1'])).not.toThrow();
-      expect(() => validateEndpoint('http://::1:11434', ['::1'])).not.toThrow();
+      // IPv6 addresses in URLs must be in brackets
+      expect(() => validateEndpoint('http://[::1]:11434', ['::1'])).not.toThrow();
     });
 
     it('should reject non-localhost endpoints', () => {

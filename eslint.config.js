@@ -9,9 +9,14 @@ import security from 'eslint-plugin-security';
 export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
-  ...tseslint.configs.recommendedTypeChecked,
   {
     files: ['**/*.ts'],
+    languageOptions: {
+      parserOptions: {
+        project: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
     plugins: {
       security: security,
     },
@@ -22,12 +27,24 @@ export default tseslint.config(
         'error',
         { argsIgnorePattern: '^_' },
       ],
-      '@typescript-eslint/no-floating-promises': 'error',
-      '@typescript-eslint/no-misused-promises': 'error',
       'no-console': 'off',
       'security/detect-object-injection': 'error',
       'security/detect-non-literal-fs-filename': 'error',
       'security/detect-non-literal-regexp': 'warn',
+    },
+  },
+  {
+    files: ['**/*.ts'],
+    languageOptions: {
+      parserOptions: {
+        project: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+    rules: {
+      ...tseslint.configs.recommendedTypeChecked.rules,
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/no-misused-promises': 'error',
     },
   },
   {
