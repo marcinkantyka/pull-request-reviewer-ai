@@ -12,9 +12,11 @@ import path from 'path';
 
 export class GitRepositoryManager {
   private git: SimpleGit;
+  private readonly repoPath: string;
 
   constructor(repoPath: string) {
     const resolvedPath = path.resolve(repoPath);
+    this.repoPath = resolvedPath;
     this.git = simpleGit(resolvedPath);
     logger.debug({ repoPath: resolvedPath }, 'Initialized git repository manager');
   }
@@ -29,9 +31,8 @@ export class GitRepositoryManager {
         this.git.branchLocal(),
       ]);
 
-      const repoPath = await this.git.cwd();
       return {
-        path: repoPath,
+        path: this.repoPath,
         currentBranch: currentBranch.trim(),
         branches: branches.all,
       };
