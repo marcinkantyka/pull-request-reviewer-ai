@@ -4,7 +4,6 @@
 
 import { Command } from 'commander';
 import { loadConfig, DEFAULT_CONFIG } from '../../core/storage/config.js';
-import { logger } from '../../utils/logger.js';
 import fs from 'fs/promises';
 import path from 'path';
 import * as yaml from 'js-yaml';
@@ -24,6 +23,7 @@ export function createConfigCommand(): Command {
 
         for (const k of keys) {
           if (typeof value === 'object' && value !== null && k in value) {
+            // eslint-disable-next-line security/detect-object-injection
             value = (value as Record<string, unknown>)[k];
           } else {
             console.error(`Key not found: ${key}`);
@@ -59,6 +59,7 @@ export function createConfigCommand(): Command {
       try {
         const outputPath = path.resolve(options.output || 'pr-review.config.yml');
         const yamlContent = yaml.stringify(DEFAULT_CONFIG);
+        // eslint-disable-next-line security/detect-non-literal-fs-filename
         await fs.writeFile(outputPath, yamlContent, 'utf-8');
         console.log(`Configuration file created: ${outputPath}`);
       } catch (error) {

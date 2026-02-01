@@ -2,8 +2,7 @@
  * Markdown output formatter
  */
 
-import type { ReviewResult, FileReview, Issue } from '../types/review.js';
-import chalk from 'chalk';
+import type { ReviewResult, Issue } from '../types/review.js';
 
 const SEVERITY_EMOJIS: Record<Issue['severity'], string> = {
   critical: '🔴',
@@ -21,7 +20,7 @@ const SEVERITY_LABELS: Record<Issue['severity'], string> = {
   info: 'Info',
 };
 
-export function formatMarkdown(result: ReviewResult, colorize = false): string {
+export function formatMarkdown(result: ReviewResult, _colorize = false): string {
   const lines: string[] = [];
 
   // Header

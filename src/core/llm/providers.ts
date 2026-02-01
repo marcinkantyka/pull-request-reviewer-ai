@@ -11,7 +11,6 @@ import type {
 import type { LLMConfig } from '../../types/config.js';
 import { LLMError, ConfigError } from '../../utils/errors.js';
 import { validateEndpoint } from '../../utils/network-validator.js';
-import { logger } from '../../utils/logger.js';
 import { createSecureFetch } from '../../utils/network-validator.js';
 
 /**

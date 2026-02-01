@@ -10,7 +10,6 @@ import { LLMClient } from '../llm/client.js';
 import { createLLMProvider } from '../llm/providers.js';
 import { logger } from '../../utils/logger.js';
 import { minimatch } from 'minimatch';
-import { LLMError } from '../../utils/errors.js';
 
 export class ReviewEngine {
   private llmClient: LLMClient;

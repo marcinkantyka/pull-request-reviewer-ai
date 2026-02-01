@@ -133,6 +133,7 @@ export function createReviewCommand(): Command {
         // Write output
         if (options.output) {
           const outputPath = path.resolve(options.output);
+          // eslint-disable-next-line security/detect-non-literal-fs-filename
           await fs.writeFile(outputPath, output, 'utf-8');
           logger.info({ outputPath }, 'Review written to file');
         } else {

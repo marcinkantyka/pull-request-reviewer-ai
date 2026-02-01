@@ -63,7 +63,7 @@ export class ReviewAnalyzer {
   /**
    * Parse issues from LLM response
    */
-  private parseIssues(content: string, filePath: string): Issue[] {
+  private parseIssues(content: string, _filePath: string): Issue[] {
     try {
       // Try to extract JSON from response (might be wrapped in markdown)
       let jsonContent = content.trim();

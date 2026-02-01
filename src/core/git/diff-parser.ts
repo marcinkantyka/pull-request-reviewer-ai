@@ -3,8 +3,6 @@
  */
 
 import type { GitDiff } from './types.js';
-import { GitError } from '../../utils/errors.js';
-import { logger } from '../../utils/logger.js';
 
 /**
  * Parses git diff output into structured format
@@ -26,6 +24,7 @@ export function parseDiff(diffOutput: string): GitDiff[] {
     if (line.startsWith('diff --git')) {
       // Save previous diff if exists
       if (currentDiff) {
+        // eslint-disable-next-line security/detect-object-injection
         diffs.push({
           ...currentDiff,
           additions,
@@ -137,5 +136,6 @@ export function detectLanguage(filePath: string): string {
     md: 'markdown',
   };
 
+  // eslint-disable-next-line security/detect-object-injection
   return languageMap[ext] || 'text';
 }

@@ -10,7 +10,7 @@ tests
 .DS_Store
 .vscode
 .idea
-tsconfig.json
 .eslintrc.json
 .prettierrc
 vitest.config.ts
+eslint.config.js
