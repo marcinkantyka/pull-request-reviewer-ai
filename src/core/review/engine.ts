@@ -61,7 +61,7 @@ export class ReviewEngine {
     );
 
     // Review files (with context-aware grouping if enabled)
-    const fileReviews = await this.reviewFilesWithContext(limitedDiffs);
+    const fileReviews = await this.reviewFilesWithContextAwareGrouping(limitedDiffs);
 
     // Generate summary
     const allIssues = fileReviews.flatMap((fr) => fr.issues);
@@ -123,8 +123,9 @@ export class ReviewEngine {
 
   /**
    * Review files with context-aware grouping
+   * Groups related files together for cross-file analysis
    */
-  private async reviewFilesWithContext(
+  private async reviewFilesWithContextAwareGrouping(
     diffs: DiffInfo[]
   ): Promise<FileReview[]> {
     const groupingOptions: GroupingOptions = {
@@ -141,7 +142,7 @@ export class ReviewEngine {
     const concurrency = this.config.review.concurrency ?? 3;
     const results: FileReview[] = [];
 
-    // Process groups in batches
+    // Process groups in batches with concurrency control
     for (let i = 0; i < groups.length; i += concurrency) {
       const batch = groups.slice(i, i + concurrency);
       const batchResults = await Promise.allSettled(
@@ -157,15 +158,18 @@ export class ReviewEngine {
             'Failed to review group'
           );
           // Create empty reviews for failed group
-          const group = batch[batchResults.indexOf(result)];
-          for (const file of group.files) {
-            results.push({
-              path: file.filePath,
-              language: file.language,
-              additions: file.additions,
-              deletions: file.deletions,
-              issues: [],
-            });
+          const groupIndex = batchResults.indexOf(result);
+          const group = batch[groupIndex];
+          if (group) {
+            for (const file of group.files) {
+              results.push({
+                path: file.filePath,
+                language: file.language,
+                additions: file.additions,
+                deletions: file.deletions,
+                issues: [],
+              });
+            }
           }
         }
       }
@@ -184,6 +188,22 @@ export class ReviewEngine {
     }
 
     // Review as a group for context awareness
+    const groupResult = await this.reviewGroupWithContext(group);
+    if (groupResult) {
+      return groupResult;
+    }
+
+    // Fallback to individual reviews if group review failed
+    return this.reviewGroupFilesIndividually(group.files);
+  }
+
+  /**
+   * Review a group of files together with context awareness
+   * Returns null if review fails (should fallback to individual reviews)
+   */
+  private async reviewGroupWithContext(
+    group: FileGroup
+  ): Promise<FileReview[] | null> {
     try {
       logger.debug(
         {
@@ -216,24 +236,36 @@ export class ReviewEngine {
         },
         'Group review failed, falling back to individual reviews'
       );
-
-      // Fallback to individual reviews
-      const results: FileReview[] = [];
-      for (const file of group.files) {
-        try {
-          results.push(await this.reviewSingleFile(file));
-        } catch {
-          results.push({
-            path: file.filePath,
-            language: file.language,
-            additions: file.additions,
-            deletions: file.deletions,
-            issues: [],
-          });
-        }
-      }
-      return results;
+      return null;
     }
+  }
+
+  /**
+   * Review files individually as fallback
+   */
+  private async reviewGroupFilesIndividually(
+    files: DiffInfo[]
+  ): Promise<FileReview[]> {
+    const results = await Promise.allSettled(
+      files.map((file) => this.reviewSingleFile(file))
+    );
+
+    return results.map((result, index) => {
+      if (result.status === 'fulfilled') {
+        return result.value;
+      }
+
+      // Return empty review for failed file
+      const file = files[index];
+      logger.warn({ filePath: file.filePath }, 'Failed to review file individually');
+      return {
+        path: file.filePath,
+        language: file.language,
+        additions: file.additions,
+        deletions: file.deletions,
+        issues: [],
+      };
+    });
   }
 
   /**

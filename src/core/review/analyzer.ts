@@ -5,6 +5,7 @@
 import type { DiffInfo, Issue } from '../../types/review.js';
 import type { LLMClient } from '../llm/client.js';
 import {
+  SYSTEM_PROMPT,
   createReviewPrompt,
   createGroupReviewPrompt,
 } from '../llm/prompts.js';
@@ -33,7 +34,7 @@ export class ReviewAnalyzer {
       );
 
       const response = await this.llmClient.analyze({
-        systemPrompt: `You are an expert code reviewer. Analyze code changes and provide feedback as a JSON array of issues.`,
+        systemPrompt: SYSTEM_PROMPT,
         userPrompt: prompt,
         temperature: this.temperature,
         model: this.model,
@@ -94,7 +95,7 @@ export class ReviewAnalyzer {
       );
 
       const response = await this.llmClient.analyze({
-        systemPrompt: `You are an expert code reviewer analyzing related code changes together. Focus on cross-file consistency, dependencies, architectural patterns, and breaking changes that span multiple files.`,
+        systemPrompt: `${SYSTEM_PROMPT}\n\nAdditionally, you are analyzing MULTIPLE RELATED FILES together. Focus on cross-file consistency, dependencies, architectural patterns, and breaking changes that span multiple files.`,
         userPrompt: prompt,
         temperature: this.temperature,
         model: this.model,

@@ -53,12 +53,33 @@ export const DEFAULT_CONFIG: AppConfig = {
       'bestPractices',
     ],
     // Context-aware review options
-    contextAware: process.env.CONTEXT_AWARE === 'true' || true,
-    groupByDirectory: process.env.GROUP_BY_DIRECTORY !== 'false',
-    groupByFeature: process.env.GROUP_BY_FEATURE !== 'false',
-    maxGroupSize: parseInt(process.env.MAX_GROUP_SIZE || '5', 10),
-    directoryDepth: parseInt(process.env.DIRECTORY_DEPTH || '2', 10),
-    concurrency: parseInt(process.env.REVIEW_CONCURRENCY || '3', 10),
+    // Default: true (enabled), can be disabled via CONTEXT_AWARE=false
+    contextAware:
+      process.env.CONTEXT_AWARE === undefined
+        ? true
+        : process.env.CONTEXT_AWARE === 'true',
+    // Default: true (enabled), can be disabled via GROUP_BY_DIRECTORY=false
+    groupByDirectory:
+      process.env.GROUP_BY_DIRECTORY === undefined
+        ? true
+        : process.env.GROUP_BY_DIRECTORY !== 'false',
+    // Default: true (enabled), can be disabled via GROUP_BY_FEATURE=false
+    groupByFeature:
+      process.env.GROUP_BY_FEATURE === undefined
+        ? true
+        : process.env.GROUP_BY_FEATURE !== 'false',
+    // Default: 5, can be overridden via MAX_GROUP_SIZE env var
+    maxGroupSize: process.env.MAX_GROUP_SIZE
+      ? parseInt(process.env.MAX_GROUP_SIZE, 10)
+      : 5,
+    // Default: 2, can be overridden via DIRECTORY_DEPTH env var
+    directoryDepth: process.env.DIRECTORY_DEPTH
+      ? parseInt(process.env.DIRECTORY_DEPTH, 10)
+      : 2,
+    // Default: 3, can be overridden via REVIEW_CONCURRENCY env var
+    concurrency: process.env.REVIEW_CONCURRENCY
+      ? parseInt(process.env.REVIEW_CONCURRENCY, 10)
+      : 3,
   },
   output: {
     defaultFormat: 'text',
