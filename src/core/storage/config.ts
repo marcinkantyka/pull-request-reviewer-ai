@@ -7,10 +7,6 @@ import type { AppConfig } from '../../types/config.js';
 import { ConfigError } from '../../utils/errors.js';
 import { validateConfig } from '../../utils/validator.js';
 import { logger } from '../../utils/logger.js';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /**
  * Default configuration

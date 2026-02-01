@@ -8,7 +8,6 @@ import { createCompareCommand } from './commands/compare.js';
 import { createReviewCommand } from './commands/review.js';
 import { createConfigCommand } from './commands/config.js';
 import { logger } from '../utils/logger.js';
-import { PRReviewError } from '../utils/errors.js';
 
 const program = new Command();
 

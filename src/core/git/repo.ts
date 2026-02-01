@@ -3,12 +3,11 @@
  */
 
 import simpleGit, { type SimpleGit } from 'simple-git';
-import type { GitDiff, GitRepository } from './types.js';
+import type { GitRepository } from './types.js';
 import { GitError } from '../../utils/errors.js';
 import { logger } from '../../utils/logger.js';
 import { parseDiff, detectLanguage } from './diff-parser.js';
 import type { DiffInfo } from '../../types/review.js';
-import { validateFilePath } from '../../utils/validator.js';
 import path from 'path';
 
 export class GitRepositoryManager {

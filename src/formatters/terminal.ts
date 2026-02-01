@@ -2,7 +2,7 @@
  * Terminal output formatter with colors
  */
 
-import type { ReviewResult, FileReview, Issue } from '../types/review.js';
+import type { ReviewResult, Issue } from '../types/review.js';
 import chalk from 'chalk';
 
 const SEVERITY_COLORS: Record<Issue['severity'], (text: string) => string> = {
@@ -27,7 +27,9 @@ export function formatTerminal(
   showDiff = false
 ): string {
   const lines: string[] = [];
-  const color = colorize ? chalk : { dim: (s: string) => s, bold: (s: string) => s };
+  const color = colorize
+    ? chalk
+    : ({ dim: (s: string): string => s, bold: (s: string): string => s } as typeof chalk);
 
   // Header
   lines.push('');

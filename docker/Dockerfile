@@ -6,6 +6,7 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 COPY tsconfig.json ./
+COPY tsup.config.ts ./
 
 # Install dependencies
 RUN npm ci

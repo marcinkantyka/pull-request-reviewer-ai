@@ -32,7 +32,12 @@ export function validateEndpoint(
     );
   }
 
-  const hostname = url.hostname.toLowerCase();
+  let hostname = url.hostname.toLowerCase();
+  
+  // Strip brackets from IPv6 addresses (e.g., [::1] -> ::1)
+  if (hostname.startsWith('[') && hostname.endsWith(']')) {
+    hostname = hostname.slice(1, -1);
+  }
 
   // Check if it's localhost
   const isLocalhost = LOCALHOST_ADDRESSES.includes(hostname);
