@@ -1,5 +1,10 @@
 #!/bin/bash
 # Basic usage examples for PR Review CLI
+#
+# Note: If running from source (not installed globally), replace 'pr-review' with:
+#   node dist/cli/index.js
+#
+# Example: node dist/cli/index.js review --base main
 
 # 1. Review current branch against main
 pr-review review --base main

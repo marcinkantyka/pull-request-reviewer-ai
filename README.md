@@ -14,11 +14,13 @@ A production-ready, fully self-hosted, offline-first Pull Request review CLI too
 
 ## Installation
 
-### npm
+### npm (Global Installation)
 
 ```bash
 npm install -g pr-review-cli
 ```
+
+After installation, use the `pr-review` command directly.
 
 ### From Source
 
@@ -27,7 +29,20 @@ git clone https://github.com/your-org/pr-review-cli.git
 cd pr-review-cli
 npm install
 npm run build
+```
+
+**Running from source:**
+After building, use `node dist/cli/index.js` instead of `pr-review`:
+```bash
+node dist/cli/index.js --help
+node dist/cli/index.js review --base main
+```
+
+**Optional - Link globally for easier access:**
+```bash
 npm link
+# Now you can use 'pr-review' command
+pr-review --help
 ```
 
 ### Docker
@@ -68,8 +83,9 @@ docker run -p 8080:8080 ghcr.io/ggerganov/llama.cpp:server \
 ### 2. Configure PR Review CLI
 
 ```bash
-# Initialize default config
-pr-review config init
+# Initialize default config (after building)
+npm run build
+node dist/cli/index.js config init
 
 # Or set via environment variables
 export LLM_ENDPOINT=http://localhost:11434
@@ -79,15 +95,25 @@ export LLM_PROVIDER=ollama
 
 ### 3. Run Your First Review
 
+**When running from source (after `npm run build`):**
+```bash
+# Review current branch against main
+node dist/cli/index.js review --base main
+
+# Compare two specific branches
+node dist/cli/index.js compare feature/new-feature main
+
+# Output to file
+node dist/cli/index.js compare feature/new-feature main --format json --output review.json
+```
+
+**When installed globally (after `npm link` or `npm install -g`):**
 ```bash
 # Review current branch against main
 pr-review review --base main
 
 # Compare two specific branches
 pr-review compare feature/new-feature main
-
-# Output to file
-pr-review compare feature/new-feature main --format json --output review.json
 ```
 
 ## Configuration
@@ -141,6 +167,12 @@ All configuration can be overridden via environment variables:
 
 ### Compare Branches
 
+**When running from source:**
+```bash
+node dist/cli/index.js compare <source-branch> <target-branch> [options]
+```
+
+**When installed globally:**
 ```bash
 pr-review compare <source-branch> <target-branch> [options]
 ```
@@ -158,6 +190,12 @@ pr-review compare <source-branch> <target-branch> [options]
 
 ### Review Current Branch
 
+**When running from source:**
+```bash
+node dist/cli/index.js review --base <branch> [options]
+```
+
+**When installed globally:**
 ```bash
 pr-review review --base <branch> [options]
 ```
@@ -166,6 +204,19 @@ Review current branch against a base branch (default: main).
 
 ### Configuration Management
 
+**When running from source:**
+```bash
+# Get configuration value
+node dist/cli/index.js config get llm.endpoint
+
+# List all configuration
+node dist/cli/index.js config list
+
+# Initialize default config file
+node dist/cli/index.js config init
+```
+
+**When installed globally:**
 ```bash
 # Get configuration value
 pr-review config get llm.endpoint
@@ -417,6 +468,10 @@ The tool enforces strict network security:
 
 2. Verify endpoint in configuration:
    ```bash
+   # When running from source
+   node dist/cli/index.js config get llm.endpoint
+   
+   # When installed globally
    pr-review config get llm.endpoint
    ```
 
@@ -441,6 +496,10 @@ The tool enforces strict network security:
 **Solution:**
 1. Increase timeout:
    ```bash
+   # When running from source
+   node dist/cli/index.js compare feature main --timeout 120
+   
+   # When installed globally
    pr-review compare feature main --timeout 120
    ```
 
@@ -490,6 +549,9 @@ cd pr-review-cli
 # Install dependencies
 npm install
 
+# Install dependencies
+npm install
+
 # Build
 npm run build
 
@@ -498,6 +560,9 @@ npm test
 
 # Lint
 npm run lint
+
+# Run the CLI (after building)
+node dist/cli/index.js --help
 ```
 
 ### Testing
