@@ -1,5 +1,8 @@
 # PR Review CLI
 
+[![CI](https://github.com/your-org/pr-review-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/your-org/pr-review-cli/actions/workflows/ci.yml)
+[![Release](https://github.com/your-org/pr-review-cli/actions/workflows/release.yml/badge.svg)](https://github.com/your-org/pr-review-cli/actions/workflows/release.yml)
+
 A production-ready, fully self-hosted, offline-first Pull Request review CLI tool in TypeScript that uses local LLM for code analysis. The solution works completely offline after initial setup and ensures no code or data leaves your local machine.
 
 ## Features
