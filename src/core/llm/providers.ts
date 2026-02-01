@@ -18,7 +18,7 @@ export class OllamaProvider implements LLMProvider {
 
   constructor(
     private readonly endpoint: string,
-    private readonly apiKey?: string,
+    _apiKey?: string,
     allowedHosts: string[] = ['localhost', '127.0.0.1', '::1']
   ) {
     validateEndpoint(endpoint, allowedHosts);
@@ -128,6 +128,10 @@ export class VLLMProvider implements LLMProvider {
       };
     };
 
+    if (!data.choices || data.choices.length === 0) {
+      throw new LLMError('No response from vLLM provider', { response: data });
+    }
+
     return {
       content: data.choices[0]?.text || '',
       usage: data.usage
@@ -162,7 +166,7 @@ export class LlamaCppProvider implements LLMProvider {
 
   constructor(
     private readonly endpoint: string,
-    private readonly apiKey?: string,
+    _apiKey?: string,
     allowedHosts: string[] = ['localhost', '127.0.0.1', '::1']
   ) {
     validateEndpoint(endpoint, allowedHosts);
@@ -190,10 +194,14 @@ export class LlamaCppProvider implements LLMProvider {
     }
 
     const data = (await response.json()) as {
-      content: string;
+      content?: string;
       tokens_evaluated?: number;
       tokens_predicted?: number;
     };
+
+    if (!data.content) {
+      throw new LLMError('No response from llama.cpp provider', { response: data });
+    }
 
     return {
       content: data.content,
@@ -277,6 +285,10 @@ export class OpenAICompatibleProvider implements LLMProvider {
         total_tokens: number;
       };
     };
+
+    if (!data.choices || data.choices.length === 0) {
+      throw new LLMError('No response from OpenAI-compatible provider', { response: data });
+    }
 
     return {
       content: data.choices[0]?.message?.content || '',

@@ -84,7 +84,6 @@ export function validateConfig(config: unknown): AppConfig {
 /**
  * Validates file path to prevent path traversal attacks
  */
-import path from 'path';
 
 export function validateFilePath(filePath: string, basePath: string): string {
   const resolved = path.resolve(basePath, filePath);

@@ -58,7 +58,7 @@ export function createConfigCommand(): Command {
     .action(async (options: { output?: string }) => {
       try {
         const outputPath = path.resolve(options.output || 'pr-review.config.yml');
-        const yamlContent = yaml.stringify(DEFAULT_CONFIG);
+        const yamlContent = yaml.dump(DEFAULT_CONFIG);
         // eslint-disable-next-line security/detect-non-literal-fs-filename
         await fs.writeFile(outputPath, yamlContent, 'utf-8');
         console.log(`Configuration file created: ${outputPath}`);

@@ -3,8 +3,8 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { calculateScore, generateSummary } from '../../../src/core/review/scorer.js';
-import type { Issue } from '../../../src/types/review.js';
+import { calculateScore, generateSummary } from '../../../src/core/review/scorer';
+import type { Issue } from '../../../src/types/review';
 
 describe('Scorer', () => {
   describe('calculateScore', () => {

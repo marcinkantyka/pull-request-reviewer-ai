@@ -71,15 +71,31 @@ export function createSecureFetch(allowedHosts: string[]) {
     // Log the request (for audit trail)
     logger.info({ url }, 'Connecting to local endpoint');
 
-    const timeout = options?.signal || AbortSignal.timeout(60000);
+    // Create timeout controller if no signal provided
+    let timeoutController: AbortController | null = null;
+    let timeoutId: NodeJS.Timeout | null = null;
+
+    if (!options?.signal) {
+      timeoutController = new AbortController();
+      timeoutId = setTimeout(() => {
+        timeoutController?.abort();
+      }, 60000);
+    }
 
     try {
-      return await fetch(url, {
+      const response = await fetch(url, {
         ...options,
-        signal: timeout,
+        signal: options?.signal || timeoutController?.signal,
       });
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      return response;
     } catch (error) {
-      if (error instanceof Error && error.name === 'TimeoutError') {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      if (error instanceof Error && error.name === 'AbortError') {
         throw new Error('LLM request timed out');
       }
       throw error;

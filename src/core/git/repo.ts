@@ -29,8 +29,9 @@ export class GitRepositoryManager {
         this.git.branchLocal(),
       ]);
 
+      const repoPath = await this.git.cwd();
       return {
-        path: this.git.cwd(),
+        path: repoPath,
         currentBranch: currentBranch.trim(),
         branches: branches.all,
       };

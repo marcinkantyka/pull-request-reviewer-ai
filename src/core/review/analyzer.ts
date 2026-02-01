@@ -68,6 +68,9 @@ export class ReviewAnalyzer {
     groupType: 'directory' | 'feature',
     context?: string
   ): Promise<Map<string, Issue[]>> {
+    if (files.length === 0) {
+      return new Map();
+    }
     logger.debug(
       {
         fileCount: files.length,
@@ -140,7 +143,9 @@ export class ReviewAnalyzer {
       if (jsonContent.startsWith('```')) {
         const lines = jsonContent.split('\n');
         const startIndex = lines.findIndex((line) => line.includes('['));
-        const endIndex = lines.findLastIndex((line) => line.includes(']'));
+        const reversedLines = [...lines].reverse();
+        const reversedEndIndex = reversedLines.findIndex((line: string) => line.includes(']'));
+        const endIndex = reversedEndIndex !== -1 ? lines.length - 1 - reversedEndIndex : -1;
         if (startIndex !== -1 && endIndex !== -1) {
           jsonContent = lines.slice(startIndex, endIndex + 1).join('\n');
         }
@@ -229,7 +234,9 @@ export class ReviewAnalyzer {
       if (jsonContent.startsWith('```')) {
         const lines = jsonContent.split('\n');
         const startIndex = lines.findIndex((line) => line.includes('['));
-        const endIndex = lines.findLastIndex((line) => line.includes(']'));
+        const reversedLines = [...lines].reverse();
+        const reversedEndIndex = reversedLines.findIndex((line: string) => line.includes(']'));
+        const endIndex = reversedEndIndex !== -1 ? lines.length - 1 - reversedEndIndex : -1;
         if (startIndex !== -1 && endIndex !== -1) {
           jsonContent = lines.slice(startIndex, endIndex + 1).join('\n');
         }

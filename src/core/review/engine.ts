@@ -46,6 +46,32 @@ export class ReviewEngine {
 
     logger.info({ fileCount: limitedDiffs.length }, 'Files to review after filtering');
 
+    // Handle empty diffs
+    if (limitedDiffs.length === 0) {
+      logger.info('No files to review after filtering');
+      const duration = Date.now() - startTime;
+      return {
+        summary: {
+          filesReviewed: 0,
+          totalIssues: 0,
+          critical: 0,
+          high: 0,
+          medium: 0,
+          low: 0,
+          info: 0,
+          score: 10,
+        },
+        files: [],
+        metadata: {
+          timestamp: new Date().toISOString(),
+          sourceBranch,
+          targetBranch,
+          llmModel: this.config.llm.model,
+          duration,
+        },
+      };
+    }
+
     // Review files (with context-aware grouping if enabled)
     const fileReviews = await this.reviewFilesWithContextAwareGrouping(limitedDiffs);
 
