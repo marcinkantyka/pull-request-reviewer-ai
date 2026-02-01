@@ -18,13 +18,13 @@ export function parseDiff(diffOutput: string): GitDiff[] {
   let diffLines: string[] = [];
 
   for (let i = 0; i < lines.length; i++) {
+    // eslint-disable-next-line security/detect-object-injection
     const line = lines[i];
 
     // File header
     if (line.startsWith('diff --git')) {
       // Save previous diff if exists
       if (currentDiff) {
-        // eslint-disable-next-line security/detect-object-injection
         diffs.push({
           ...currentDiff,
           additions,
