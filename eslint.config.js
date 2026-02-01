@@ -21,6 +21,7 @@ export default tseslint.config(
       security: security,
     },
     rules: {
+      // Basic TypeScript rules
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/explicit-function-return-type': 'error',
       '@typescript-eslint/no-unused-vars': [
@@ -28,20 +29,11 @@ export default tseslint.config(
         { argsIgnorePattern: '^_' },
       ],
       'no-console': 'off',
+      // Security plugin rules
       'security/detect-object-injection': 'error',
       'security/detect-non-literal-fs-filename': 'error',
       'security/detect-non-literal-regexp': 'warn',
-    },
-  },
-  {
-    files: ['**/*.ts'],
-    languageOptions: {
-      parserOptions: {
-        project: true,
-        tsconfigRootDir: import.meta.dirname,
-      },
-    },
-    rules: {
+      // Type-checked rules (require parserOptions.project)
       ...tseslint.configs.recommendedTypeChecked.rules,
       '@typescript-eslint/no-floating-promises': 'error',
       '@typescript-eslint/no-misused-promises': 'error',
