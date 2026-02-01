@@ -38,7 +38,7 @@ curl -fsSL https://ollama.com/install.sh | sh
 ollama serve
 
 # In another terminal, pull a code review model
-ollama pull deepseek-coder:6.7b
+ollama pull qwen2.5-coder:7b
 
 # Or use a smaller/faster model
 ollama pull deepseek-coder:1.3b
@@ -63,7 +63,7 @@ node dist/cli/index.js config init
 
 # Option 2: Use environment variables
 export LLM_ENDPOINT=http://localhost:11434
-export LLM_MODEL=deepseek-coder:6.7b
+export LLM_MODEL=qwen2.5-coder:7b
 export LLM_PROVIDER=ollama
 ```
 
