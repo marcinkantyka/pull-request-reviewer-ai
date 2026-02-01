@@ -33,12 +33,14 @@ npm run build
 
 **Running from source:**
 After building, use `node dist/cli/index.js` instead of `pr-review`:
+
 ```bash
 node dist/cli/index.js --help
 node dist/cli/index.js review --base main
 ```
 
 **Optional - Link globally for easier access:**
+
 ```bash
 npm link
 # Now you can use 'pr-review' command
@@ -96,6 +98,7 @@ export LLM_PROVIDER=ollama
 ### 3. Run Your First Review
 
 **When running from source (after `npm run build`):**
+
 ```bash
 # Review current branch against main
 node dist/cli/index.js review --base main
@@ -108,6 +111,7 @@ node dist/cli/index.js compare feature/new-feature main --format json --output r
 ```
 
 **When installed globally (after `npm link` or `npm install -g`):**
+
 ```bash
 # Review current branch against main
 pr-review review --base main
@@ -124,29 +128,29 @@ Create `pr-review.config.yml` in your project root:
 
 ```yaml
 llm:
-  endpoint: "http://localhost:11434"
-  provider: "ollama"
-  model: "deepseek-coder:6.7b"
+  endpoint: 'http://localhost:11434'
+  provider: 'ollama'
+  model: 'deepseek-coder:6.7b'
   temperature: 0.2
   timeout: 60000
 
 network:
   allowedHosts:
-    - "localhost"
-    - "127.0.0.1"
-    - "::1"
+    - 'localhost'
+    - '127.0.0.1'
+    - '::1'
   strictMode: true
 
 review:
   maxFiles: 50
   maxLinesPerFile: 1000
   excludePatterns:
-    - "*.lock"
-    - "node_modules/**"
-    - "dist/**"
+    - '*.lock'
+    - 'node_modules/**'
+    - 'dist/**'
 
 output:
-  defaultFormat: "text"
+  defaultFormat: 'text'
   colorize: true
   showDiff: false
 ```
@@ -168,16 +172,19 @@ All configuration can be overridden via environment variables:
 ### Compare Branches
 
 **When running from source:**
+
 ```bash
 node dist/cli/index.js compare <source-branch> <target-branch> [options]
 ```
 
 **When installed globally:**
+
 ```bash
 pr-review compare <source-branch> <target-branch> [options]
 ```
 
 **Options:**
+
 - `--repo-path <path>`: Repository path (default: cwd)
 - `--format <json|md|text>`: Output format (default: text)
 - `--output <file>`: Output file (default: stdout)
@@ -191,11 +198,13 @@ pr-review compare <source-branch> <target-branch> [options]
 ### Review Current Branch
 
 **When running from source:**
+
 ```bash
 node dist/cli/index.js review --base <branch> [options]
 ```
 
 **When installed globally:**
+
 ```bash
 pr-review review --base <branch> [options]
 ```
@@ -205,6 +214,7 @@ Review current branch against a base branch (default: main).
 ### Configuration Management
 
 **When running from source:**
+
 ```bash
 # Get configuration value
 node dist/cli/index.js config get llm.endpoint
@@ -217,6 +227,7 @@ node dist/cli/index.js config init
 ```
 
 **When installed globally:**
+
 ```bash
 # Get configuration value
 pr-review config get llm.endpoint
@@ -295,24 +306,24 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-    
+
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-      
+
       - name: Install PR Review CLI
         run: npm install -g pr-review-cli
-      
+
       - name: Pull Ollama model
         run: |
           curl http://localhost:11434/api/pull -d '{"name": "deepseek-coder:1.3b"}'
-      
+
       - name: Run code review
         run: |
           pr-review compare ${{ github.head_ref }} ${{ github.base_ref }} \
@@ -322,7 +333,7 @@ jobs:
         env:
           LLM_ENDPOINT: http://localhost:11434
           LLM_MODEL: deepseek-coder:1.3b
-      
+
       - name: Upload review
         uses: actions/upload-artifact@v3
         with:
@@ -363,43 +374,49 @@ code-review:
 ### Ollama
 
 **Installation:**
+
 ```bash
 curl -fsSL https://ollama.com/install.sh | sh
 ```
 
 **Available Models:**
+
 - `deepseek-coder:6.7b` (Recommended for code review)
 - `deepseek-coder:1.3b` (Faster, smaller)
 - `codellama:7b` (Alternative)
 - `llama3:8b` (General purpose)
 
 **Configuration:**
+
 ```yaml
 llm:
-  endpoint: "http://localhost:11434"
-  provider: "ollama"
-  model: "deepseek-coder:6.7b"
+  endpoint: 'http://localhost:11434'
+  provider: 'ollama'
+  model: 'deepseek-coder:6.7b'
 ```
 
 ### vLLM
 
 **Docker:**
+
 ```bash
 docker run --gpus all -p 8000:8000 vllm/vllm-openai:latest \
   --model deepseek-ai/deepseek-coder-6.7b-instruct
 ```
 
 **Configuration:**
+
 ```yaml
 llm:
-  endpoint: "http://localhost:8000"
-  provider: "vllm"
-  model: "deepseek-coder-6.7b-instruct"
+  endpoint: 'http://localhost:8000'
+  provider: 'vllm'
+  model: 'deepseek-coder-6.7b-instruct'
 ```
 
 ### llama.cpp Server
 
 **Docker:**
+
 ```bash
 docker run -p 8080:8080 ghcr.io/ggerganov/llama.cpp:server \
   -m /models/deepseek-coder-6.7b-instruct-q4_k_m.gguf \
@@ -407,22 +424,24 @@ docker run -p 8080:8080 ghcr.io/ggerganov/llama.cpp:server \
 ```
 
 **Configuration:**
+
 ```yaml
 llm:
-  endpoint: "http://localhost:8080"
-  provider: "llamacpp"
-  model: "deepseek-coder-6.7b-instruct"
+  endpoint: 'http://localhost:8080'
+  provider: 'llamacpp'
+  model: 'deepseek-coder-6.7b-instruct'
 ```
 
 ### OpenAI-Compatible (LM Studio, LocalAI, etc.)
 
 **Configuration:**
+
 ```yaml
 llm:
-  endpoint: "http://localhost:1234/v1"
-  provider: "openai-compatible"
-  model: "deepseek-coder"
-  apiKey: ""  # Optional
+  endpoint: 'http://localhost:1234/v1'
+  provider: 'openai-compatible'
+  model: 'deepseek-coder'
+  apiKey: '' # Optional
 ```
 
 ## Security
@@ -457,20 +476,23 @@ The tool enforces strict network security:
 **Error:** `LLM provider is not available`
 
 **Solution:**
+
 1. Ensure your LLM server is running:
+
    ```bash
    # For Ollama
    ollama serve
-   
+
    # Check health
    curl http://localhost:11434/api/tags
    ```
 
 2. Verify endpoint in configuration:
+
    ```bash
    # When running from source
    node dist/cli/index.js config get llm.endpoint
-   
+
    # When installed globally
    pr-review config get llm.endpoint
    ```
@@ -485,6 +507,7 @@ The tool enforces strict network security:
 **Error:** `SECURITY VIOLATION: Attempted to connect to non-local endpoint`
 
 **Solution:**
+
 - Ensure endpoint is localhost only
 - Check `network.allowedHosts` in config
 - Verify `NETWORK_STRICT_MODE` is not blocking valid localhost connections
@@ -494,11 +517,13 @@ The tool enforces strict network security:
 **Error:** `Request timeout after 60000ms`
 
 **Solution:**
+
 1. Increase timeout:
+
    ```bash
    # When running from source
    node dist/cli/index.js compare feature main --timeout 120
-   
+
    # When installed globally
    pr-review compare feature main --timeout 120
    ```
@@ -506,7 +531,7 @@ The tool enforces strict network security:
 2. Or in config:
    ```yaml
    llm:
-     timeout: 120000  # 2 minutes
+     timeout: 120000 # 2 minutes
    ```
 
 ### No Differences Found
@@ -514,6 +539,7 @@ The tool enforces strict network security:
 **Error:** `No differences found between branches`
 
 **Solution:**
+
 - Verify branch names are correct
 - Ensure branches have commits
 - Check if branches are identical

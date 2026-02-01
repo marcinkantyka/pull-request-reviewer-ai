@@ -29,18 +29,9 @@ export const ReviewConfigSchema = z.object({
   maxFiles: z.number().positive(),
   maxLinesPerFile: z.number().positive(),
   excludePatterns: z.array(z.string()),
-  severityLevels: z.array(
-    z.enum(['critical', 'high', 'medium', 'low', 'info'])
-  ),
+  severityLevels: z.array(z.enum(['critical', 'high', 'medium', 'low', 'info'])),
   categories: z.array(
-    z.enum([
-      'security',
-      'bugs',
-      'performance',
-      'maintainability',
-      'style',
-      'bestPractices',
-    ])
+    z.enum(['security', 'bugs', 'performance', 'maintainability', 'style', 'bestPractices'])
   ),
   // Context-aware options (optional)
   contextAware: z.boolean().optional(),
@@ -100,9 +91,7 @@ export function validateFilePath(filePath: string, basePath: string): string {
   const base = path.resolve(basePath);
 
   if (!resolved.startsWith(base)) {
-    throw new ValidationError(
-      `Path traversal detected: ${filePath} resolves outside base path`
-    );
+    throw new ValidationError(`Path traversal detected: ${filePath} resolves outside base path`);
   }
 
   return resolved;

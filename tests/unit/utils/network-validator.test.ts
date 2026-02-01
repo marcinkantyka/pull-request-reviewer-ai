@@ -16,24 +16,22 @@ describe('NetworkValidator', () => {
     });
 
     it('should reject non-localhost endpoints', () => {
-      expect(() =>
-        validateEndpoint('http://example.com:11434', ['localhost'])
-      ).toThrow(NetworkSecurityError);
-      expect(() =>
-        validateEndpoint('http://192.168.1.1:11434', ['localhost'])
-      ).toThrow(NetworkSecurityError);
+      expect(() => validateEndpoint('http://example.com:11434', ['localhost'])).toThrow(
+        NetworkSecurityError
+      );
+      expect(() => validateEndpoint('http://192.168.1.1:11434', ['localhost'])).toThrow(
+        NetworkSecurityError
+      );
     });
 
     it('should reject invalid protocols', () => {
-      expect(() =>
-        validateEndpoint('ftp://localhost:11434', ['localhost'])
-      ).toThrow(NetworkSecurityError);
+      expect(() => validateEndpoint('ftp://localhost:11434', ['localhost'])).toThrow(
+        NetworkSecurityError
+      );
     });
 
     it('should reject invalid URLs', () => {
-      expect(() => validateEndpoint('not-a-url', ['localhost'])).toThrow(
-        NetworkSecurityError
-      );
+      expect(() => validateEndpoint('not-a-url', ['localhost'])).toThrow(NetworkSecurityError);
     });
   });
 

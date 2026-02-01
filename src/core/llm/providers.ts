@@ -3,11 +3,7 @@
  * Supports Ollama, vLLM, llama.cpp, and OpenAI-compatible APIs
  */
 
-import type {
-  LLMProvider,
-  AnalyzeRequest,
-  AnalyzeResponse,
-} from '../../types/llm.js';
+import type { LLMProvider, AnalyzeRequest, AnalyzeResponse } from '../../types/llm.js';
 import type { LLMConfig } from '../../types/config.js';
 import { LLMError, ConfigError } from '../../utils/errors.js';
 import { validateEndpoint } from '../../utils/network-validator.js';
@@ -44,10 +40,10 @@ export class OllamaProvider implements LLMProvider {
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new LLMError(
-        `Ollama request failed: ${response.statusText}`,
-        { status: response.status, error: errorText }
-      );
+      throw new LLMError(`Ollama request failed: ${response.statusText}`, {
+        status: response.status,
+        error: errorText,
+      });
     }
 
     const data = (await response.json()) as {
@@ -61,8 +57,7 @@ export class OllamaProvider implements LLMProvider {
       usage: {
         promptTokens: data.prompt_eval_count || 0,
         completionTokens: data.eval_count || 0,
-        totalTokens:
-          (data.prompt_eval_count || 0) + (data.eval_count || 0),
+        totalTokens: (data.prompt_eval_count || 0) + (data.eval_count || 0),
       },
     };
   }
@@ -118,10 +113,10 @@ export class VLLMProvider implements LLMProvider {
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new LLMError(
-        `vLLM request failed: ${response.statusText}`,
-        { status: response.status, error: errorText }
-      );
+      throw new LLMError(`vLLM request failed: ${response.statusText}`, {
+        status: response.status,
+        error: errorText,
+      });
     }
 
     const data = (await response.json()) as {
@@ -188,10 +183,10 @@ export class LlamaCppProvider implements LLMProvider {
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new LLMError(
-        `llama.cpp request failed: ${response.statusText}`,
-        { status: response.status, error: errorText }
-      );
+      throw new LLMError(`llama.cpp request failed: ${response.statusText}`, {
+        status: response.status,
+        error: errorText,
+      });
     }
 
     const data = (await response.json()) as {
@@ -205,8 +200,7 @@ export class LlamaCppProvider implements LLMProvider {
       usage: {
         promptTokens: data.tokens_evaluated || 0,
         completionTokens: data.tokens_predicted || 0,
-        totalTokens:
-          (data.tokens_evaluated || 0) + (data.tokens_predicted || 0),
+        totalTokens: (data.tokens_evaluated || 0) + (data.tokens_predicted || 0),
       },
     };
   }
@@ -265,10 +259,10 @@ export class OpenAICompatibleProvider implements LLMProvider {
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new LLMError(
-        `OpenAI-compatible request failed: ${response.statusText}`,
-        { status: response.status, error: errorText }
-      );
+      throw new LLMError(`OpenAI-compatible request failed: ${response.statusText}`, {
+        status: response.status,
+        error: errorText,
+      });
     }
 
     const data = (await response.json()) as {

@@ -11,6 +11,7 @@ npm run build
 ```
 
 This will:
+
 - Compile TypeScript to JavaScript
 - Output to `dist/cli/index.js`
 - Generate source maps
@@ -19,6 +20,7 @@ This will:
 ### Build Output Structure
 
 After building, the structure will be:
+
 ```
 dist/
   cli/
@@ -50,10 +52,12 @@ This will watch for changes and rebuild automatically.
 ### Troubleshooting
 
 **Build fails:**
+
 - Ensure all dependencies are installed: `npm install`
 - Check Node.js version: `node --version` (needs 18+)
 - Clear and rebuild: `npm run clean && npm run build`
 
 **Module not found errors:**
+
 - Run `npm install` to ensure all dependencies are installed
 - Check that `node_modules` exists and contains required packages

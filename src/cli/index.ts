@@ -32,10 +32,7 @@ process.on('unhandledRejection', (error) => {
 });
 
 process.on('uncaughtException', (error) => {
-  logger.error(
-    { error: error.message },
-    'Uncaught exception'
-  );
+  logger.error({ error: error.message }, 'Uncaught exception');
   console.error('Uncaught error:', error.message);
   process.exit(1);
 });

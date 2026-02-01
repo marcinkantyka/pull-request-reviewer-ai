@@ -57,9 +57,7 @@ export function formatMarkdown(result: ReviewResult, _colorize = false): string 
     for (const file of filesWithIssues) {
       lines.push(`### ${file.path}`);
       lines.push('');
-      lines.push(
-        `*Language:* ${file.language} | *Changes:* +${file.additions} -${file.deletions}`
-      );
+      lines.push(`*Language:* ${file.language} | *Changes:* +${file.additions} -${file.deletions}`);
       lines.push('');
 
       for (const issue of file.issues) {

@@ -1,57 +1,57 @@
 llm:
   # Generic endpoint - works with any OpenAI-compatible API
-  endpoint: "http://localhost:11434"  # Ollama default
+  endpoint: 'http://localhost:11434' # Ollama default
   # endpoint: "http://localhost:8000"  # vLLM alternative
   # endpoint: "http://localhost:8080"  # llama.cpp server alternative
   # endpoint: "http://localhost:1234/v1"  # LM Studio alternative
-  
-  provider: "ollama"  # Options: ollama, vllm, llamacpp, openai-compatible
-  model: "deepseek-coder:6.7b"
+
+  provider: 'ollama' # Options: ollama, vllm, llamacpp, openai-compatible
+  model: 'deepseek-coder:6.7b'
   temperature: 0.2
   timeout: 60000
   maxTokens: 2048
-  
+
   # API authentication (optional, for secured local endpoints)
-  apiKey: ""  # Can be set via env var: LLM_API_KEY
-  
+  apiKey: '' # Can be set via env var: LLM_API_KEY
+
   # Advanced settings
-  streaming: false  # Enable streaming responses
+  streaming: false # Enable streaming responses
   retries: 3
   retryDelay: 1000
 
 network:
   # CRITICAL: Network isolation settings
   allowedHosts:
-    - "localhost"
-    - "127.0.0.1"
-    - "::1"
+    - 'localhost'
+    - '127.0.0.1'
+    - '::1'
   # Any requests to hosts outside this list will be blocked
   # This ensures no data leaves the local machine
-  
-  strictMode: true  # If true, reject any non-localhost connections
-  dnsBlockList: ["*"]  # Block all external DNS resolution
+
+  strictMode: true # If true, reject any non-localhost connections
+  dnsBlockList: ['*'] # Block all external DNS resolution
 
 review:
   maxFiles: 50
   maxLinesPerFile: 1000
   excludePatterns:
-    - "*.lock"
-    - "*.min.js"
-    - "*.min.css"
-    - "node_modules/**"
-    - "dist/**"
-    - "build/**"
-    - ".git/**"
-    - "*.log"
-    - "*.swp"
-  
+    - '*.lock'
+    - '*.min.js'
+    - '*.min.css'
+    - 'node_modules/**'
+    - 'dist/**'
+    - 'build/**'
+    - '.git/**'
+    - '*.log'
+    - '*.swp'
+
   severityLevels:
-    - critical    # Security, bugs
-    - high        # Logic errors, performance
-    - medium      # Code quality
-    - low         # Style, suggestions
-    - info        # General comments
-  
+    - critical # Security, bugs
+    - high # Logic errors, performance
+    - medium # Code quality
+    - low # Style, suggestions
+    - info # General comments
+
   categories:
     - security
     - bugs
@@ -59,21 +59,21 @@ review:
     - maintainability
     - style
     - bestPractices
-  
+
   # Context-aware review options
-  contextAware: true          # Enable multi-file context review
-  groupByDirectory: true      # Group files in same directory
-  groupByFeature: true        # Group files by feature/module
-  maxGroupSize: 5             # Maximum files per group
-  directoryDepth: 2            # Directory levels to consider for grouping
-  concurrency: 3              # Number of groups/files to review in parallel
+  contextAware: true # Enable multi-file context review
+  groupByDirectory: true # Group files in same directory
+  groupByFeature: true # Group files by feature/module
+  maxGroupSize: 5 # Maximum files per group
+  directoryDepth: 2 # Directory levels to consider for grouping
+  concurrency: 3 # Number of groups/files to review in parallel
 
 output:
-  defaultFormat: "text"
+  defaultFormat: 'text'
   colorize: true
   showDiff: false
   groupByFile: true
 
 git:
   diffContext: 3
-  maxDiffSize: 10485760  # 10MB
+  maxDiffSize: 10485760 # 10MB

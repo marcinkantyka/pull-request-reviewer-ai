@@ -25,19 +25,13 @@ export class LLMClient {
 
     try {
       const response = await Promise.race([
-        withRetry(
-          () => this.provider.analyze(request),
-          {
-            retries: this.retries,
-            delay: this.retryDelay,
-            onError: (error, attempt) => {
-              logger.warn(
-                { attempt, error: error.message },
-                'LLM request failed, retrying'
-              );
-            },
-          }
-        ),
+        withRetry(() => this.provider.analyze(request), {
+          retries: this.retries,
+          delay: this.retryDelay,
+          onError: (error, attempt) => {
+            logger.warn({ attempt, error: error.message }, 'LLM request failed, retrying');
+          },
+        }),
         new Promise<never>((_, reject) =>
           setTimeout(
             () => reject(new LLMError(`Request timeout after ${this.timeout}ms`)),
@@ -83,9 +77,7 @@ export class LLMClient {
     try {
       return await Promise.race([
         this.provider.healthCheck(),
-        new Promise<boolean>((resolve) =>
-          setTimeout(() => resolve(false), 5000)
-        ),
+        new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 5000)),
       ]);
     } catch {
       return false;

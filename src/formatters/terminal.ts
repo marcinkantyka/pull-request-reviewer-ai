@@ -21,11 +21,7 @@ const SEVERITY_ICONS: Record<Issue['severity'], string> = {
   info: 'ℹ️',
 };
 
-export function formatTerminal(
-  result: ReviewResult,
-  colorize = true,
-  showDiff = false
-): string {
+export function formatTerminal(result: ReviewResult, colorize = true, showDiff = false): string {
   const lines: string[] = [];
   const color = colorize
     ? chalk
@@ -54,17 +50,13 @@ export function formatTerminal(
   if (result.summary.totalIssues > 0) {
     lines.push('  Issues by Severity:');
     if (result.summary.critical > 0) {
-      lines.push(
-        `    ${SEVERITY_COLORS.critical('Critical')}: ${result.summary.critical}`
-      );
+      lines.push(`    ${SEVERITY_COLORS.critical('Critical')}: ${result.summary.critical}`);
     }
     if (result.summary.high > 0) {
       lines.push(`    ${SEVERITY_COLORS.high('High')}: ${result.summary.high}`);
     }
     if (result.summary.medium > 0) {
-      lines.push(
-        `    ${SEVERITY_COLORS.medium('Medium')}: ${result.summary.medium}`
-      );
+      lines.push(`    ${SEVERITY_COLORS.medium('Medium')}: ${result.summary.medium}`);
     }
     if (result.summary.low > 0) {
       lines.push(`    ${SEVERITY_COLORS.low('Low')}: ${result.summary.low}`);
@@ -77,11 +69,7 @@ export function formatTerminal(
 
   // Score
   const scoreColor =
-    result.summary.score >= 8
-      ? chalk.green
-      : result.summary.score >= 6
-        ? chalk.yellow
-        : chalk.red;
+    result.summary.score >= 8 ? chalk.green : result.summary.score >= 6 ? chalk.yellow : chalk.red;
   lines.push(`  Score: ${scoreColor.bold(`${result.summary.score}/10`)}`);
   lines.push('');
 

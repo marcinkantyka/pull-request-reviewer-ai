@@ -10,11 +10,7 @@ import { LLMClient } from '../llm/client.js';
 import { createLLMProvider } from '../llm/providers.js';
 import { logger } from '../../utils/logger.js';
 import { minimatch } from 'minimatch';
-import {
-  groupFiles,
-  type FileGroup,
-  type GroupingOptions,
-} from './file-grouper.js';
+import { groupFiles, type FileGroup, type GroupingOptions } from './file-grouper.js';
 
 export class ReviewEngine {
   private llmClient: LLMClient;
@@ -28,11 +24,7 @@ export class ReviewEngine {
       config.llm.retries || 3,
       config.llm.retryDelay || 1000
     );
-    this.analyzer = new ReviewAnalyzer(
-      this.llmClient,
-      config.llm.model,
-      config.llm.temperature
-    );
+    this.analyzer = new ReviewAnalyzer(this.llmClient, config.llm.model, config.llm.temperature);
   }
 
   /**
@@ -44,10 +36,7 @@ export class ReviewEngine {
     targetBranch: string
   ): Promise<ReviewResult> {
     const startTime = Date.now();
-    logger.info(
-      { fileCount: diffs.length, sourceBranch, targetBranch },
-      'Starting code review'
-    );
+    logger.info({ fileCount: diffs.length, sourceBranch, targetBranch }, 'Starting code review');
 
     // Filter files based on exclude patterns
     const filteredDiffs = this.filterFiles(diffs);
@@ -55,10 +44,7 @@ export class ReviewEngine {
     // Limit number of files
     const limitedDiffs = filteredDiffs.slice(0, this.config.review.maxFiles);
 
-    logger.info(
-      { fileCount: limitedDiffs.length },
-      'Files to review after filtering'
-    );
+    logger.info({ fileCount: limitedDiffs.length }, 'Files to review after filtering');
 
     // Review files (with context-aware grouping if enabled)
     const fileReviews = await this.reviewFilesWithContextAwareGrouping(limitedDiffs);
@@ -104,7 +90,7 @@ export class ReviewEngine {
         if (minimatch(diff.filePath, pattern)) {
           logger.debug({ filePath: diff.filePath, pattern }, 'File excluded');
           return false;
-      }
+        }
       }
 
       // Check max lines per file
@@ -125,9 +111,7 @@ export class ReviewEngine {
    * Review files with context-aware grouping
    * Groups related files together for cross-file analysis
    */
-  private async reviewFilesWithContextAwareGrouping(
-    diffs: DiffInfo[]
-  ): Promise<FileReview[]> {
+  private async reviewFilesWithContextAwareGrouping(diffs: DiffInfo[]): Promise<FileReview[]> {
     const groupingOptions: GroupingOptions = {
       enabled: this.config.review.contextAware ?? true,
       groupByDirectory: this.config.review.groupByDirectory ?? true,
@@ -145,18 +129,13 @@ export class ReviewEngine {
     // Process groups in batches with concurrency control
     for (let i = 0; i < groups.length; i += concurrency) {
       const batch = groups.slice(i, i + concurrency);
-      const batchResults = await Promise.allSettled(
-        batch.map((group) => this.reviewGroup(group))
-      );
+      const batchResults = await Promise.allSettled(batch.map((group) => this.reviewGroup(group)));
 
       for (const result of batchResults) {
         if (result.status === 'fulfilled') {
           results.push(...result.value);
         } else {
-          logger.error(
-            { error: result.reason },
-            'Failed to review group'
-          );
+          logger.error({ error: result.reason }, 'Failed to review group');
           // Create empty reviews for failed group
           const groupIndex = batchResults.indexOf(result);
           // eslint-disable-next-line security/detect-object-injection
@@ -202,9 +181,7 @@ export class ReviewEngine {
    * Review a group of files together with context awareness
    * Returns null if review fails (should fallback to individual reviews)
    */
-  private async reviewGroupWithContext(
-    group: FileGroup
-  ): Promise<FileReview[] | null> {
+  private async reviewGroupWithContext(group: FileGroup): Promise<FileReview[] | null> {
     // Type guard: ensure groupType is not 'isolated'
     if (group.groupType === 'isolated') {
       return null;
@@ -249,12 +226,8 @@ export class ReviewEngine {
   /**
    * Review files individually as fallback
    */
-  private async reviewGroupFilesIndividually(
-    files: DiffInfo[]
-  ): Promise<FileReview[]> {
-    const results = await Promise.allSettled(
-      files.map((file) => this.reviewSingleFile(file))
-    );
+  private async reviewGroupFilesIndividually(files: DiffInfo[]): Promise<FileReview[]> {
+    const results = await Promise.allSettled(files.map((file) => this.reviewSingleFile(file)));
 
     return results.map((result, index) => {
       if (result.status === 'fulfilled') {
@@ -274,7 +247,6 @@ export class ReviewEngine {
       };
     });
   }
-
 
   /**
    * Review a single file

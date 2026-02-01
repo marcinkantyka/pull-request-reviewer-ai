@@ -9,7 +9,7 @@ on:
 jobs:
   review:
     runs-on: ubuntu-latest
-    
+
     services:
       ollama:
         image: ollama/ollama:latest
@@ -20,34 +20,34 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Full history for git operations
-      
+          fetch-depth: 0 # Full history for git operations
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-      
+
       - name: Install PR Review CLI
         run: npm install -g pr-review-cli
-      
+
       - name: Wait for Ollama
         run: |
           until curl -f http://localhost:11434/api/tags; do
             echo "Waiting for Ollama..."
             sleep 2
           done
-      
+
       - name: Pull Ollama model
         run: |
           curl http://localhost:11434/api/pull -d '{"name": "deepseek-coder:1.3b"}'
         timeout-minutes: 10
-      
+
       - name: Run code review
         run: |
           pr-review compare ${{ github.head_ref }} ${{ github.base_ref }} \
@@ -59,14 +59,14 @@ jobs:
           LLM_MODEL: deepseek-coder:1.3b
           LLM_PROVIDER: ollama
         continue-on-error: true
-      
+
       - name: Upload review as artifact
         uses: actions/upload-artifact@v3
         if: always()
         with:
           name: code-review
           path: review.json
-      
+
       - name: Comment PR with review
         uses: actions/github-script@v6
         if: always()
@@ -74,23 +74,23 @@ jobs:
           script: |
             const fs = require('fs');
             const review = JSON.parse(fs.readFileSync('review.json', 'utf8'));
-            
+
             const summary = review.summary;
             const comment = `## Code Review Results
-            
+
             **Files Reviewed:** ${summary.filesReviewed}
             **Total Issues:** ${summary.totalIssues}
             **Score:** ${summary.score}/10
-            
+
             ### Issues by Severity
             - 🔴 Critical: ${summary.critical}
             - 🟠 High: ${summary.high}
             - 🟡 Medium: ${summary.medium}
             - 🔵 Low: ${summary.low}
             - ℹ️ Info: ${summary.info}
-            
+
             [View full review](./review.json)`;
-            
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,

@@ -98,11 +98,13 @@ node dist/cli/index.js compare feature-branch main \
 ### Option C: Using npm run (add to package.json scripts)
 
 Add to `package.json` scripts:
+
 ```json
 "start": "node dist/cli/index.js"
 ```
 
 Then run:
+
 ```bash
 npm start review --base main
 ```
@@ -110,6 +112,7 @@ npm start review --base main
 ## Example Workflow
 
 1. **Create a test repository:**
+
 ```bash
 mkdir test-repo && cd test-repo
 git init
@@ -123,6 +126,7 @@ git commit -m "Update test"
 ```
 
 2. **Run review:**
+
 ```bash
 cd /path/to/pr-reviewer
 node dist/cli/index.js compare feature/test main --repo-path /path/to/test-repo
@@ -131,19 +135,23 @@ node dist/cli/index.js compare feature/test main --repo-path /path/to/test-repo
 ## Troubleshooting
 
 ### "LLM provider is not available"
+
 - Ensure Ollama is running: `ollama serve`
 - Check endpoint: `curl http://localhost:11434/api/tags`
 - Verify model is pulled: `ollama list`
 
 ### "Command not found: pr-review"
+
 - Use `node dist/cli/index.js` instead
 - Or run `npm link` to install globally
 
 ### Build errors
+
 - Run `npm install` first
 - Check Node.js version: `node --version` (needs 18+)
 
 ### TypeScript errors
+
 - Run `npm run typecheck` to see errors
 - Run `npm run lint` to check code quality
 

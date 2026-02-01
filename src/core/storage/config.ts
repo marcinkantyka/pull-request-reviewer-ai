@@ -44,20 +44,11 @@ export const DEFAULT_CONFIG: AppConfig = {
       '*.swp',
     ],
     severityLevels: ['critical', 'high', 'medium', 'low', 'info'],
-    categories: [
-      'security',
-      'bugs',
-      'performance',
-      'maintainability',
-      'style',
-      'bestPractices',
-    ],
+    categories: ['security', 'bugs', 'performance', 'maintainability', 'style', 'bestPractices'],
     // Context-aware review options
     // Default: true (enabled), can be disabled via CONTEXT_AWARE=false
     contextAware:
-      process.env.CONTEXT_AWARE === undefined
-        ? true
-        : process.env.CONTEXT_AWARE === 'true',
+      process.env.CONTEXT_AWARE === undefined ? true : process.env.CONTEXT_AWARE === 'true',
     // Default: true (enabled), can be disabled via GROUP_BY_DIRECTORY=false
     groupByDirectory:
       process.env.GROUP_BY_DIRECTORY === undefined
@@ -65,21 +56,13 @@ export const DEFAULT_CONFIG: AppConfig = {
         : process.env.GROUP_BY_DIRECTORY !== 'false',
     // Default: true (enabled), can be disabled via GROUP_BY_FEATURE=false
     groupByFeature:
-      process.env.GROUP_BY_FEATURE === undefined
-        ? true
-        : process.env.GROUP_BY_FEATURE !== 'false',
+      process.env.GROUP_BY_FEATURE === undefined ? true : process.env.GROUP_BY_FEATURE !== 'false',
     // Default: 5, can be overridden via MAX_GROUP_SIZE env var
-    maxGroupSize: process.env.MAX_GROUP_SIZE
-      ? parseInt(process.env.MAX_GROUP_SIZE, 10)
-      : 5,
+    maxGroupSize: process.env.MAX_GROUP_SIZE ? parseInt(process.env.MAX_GROUP_SIZE, 10) : 5,
     // Default: 2, can be overridden via DIRECTORY_DEPTH env var
-    directoryDepth: process.env.DIRECTORY_DEPTH
-      ? parseInt(process.env.DIRECTORY_DEPTH, 10)
-      : 2,
+    directoryDepth: process.env.DIRECTORY_DEPTH ? parseInt(process.env.DIRECTORY_DEPTH, 10) : 2,
     // Default: 3, can be overridden via REVIEW_CONCURRENCY env var
-    concurrency: process.env.REVIEW_CONCURRENCY
-      ? parseInt(process.env.REVIEW_CONCURRENCY, 10)
-      : 3,
+    concurrency: process.env.REVIEW_CONCURRENCY ? parseInt(process.env.REVIEW_CONCURRENCY, 10) : 3,
   },
   output: {
     defaultFormat: 'text',

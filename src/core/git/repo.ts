@@ -63,10 +63,7 @@ export class GitRepositoryManager {
     maxDiffSize: number = 10485760
   ): Promise<DiffInfo[]> {
     try {
-      logger.info(
-        { sourceBranch, targetBranch },
-        'Getting diff between branches'
-      );
+      logger.info({ sourceBranch, targetBranch }, 'Getting diff between branches');
 
       // Check if branches exist
       const [sourceExists, targetExists] = await Promise.all([
@@ -82,16 +79,10 @@ export class GitRepositoryManager {
       }
 
       // Get diff output
-      const diffOutput = await this.git.diff([
-        targetBranch,
-        sourceBranch,
-        '--',
-      ]);
+      const diffOutput = await this.git.diff([targetBranch, sourceBranch, '--']);
 
       if (diffOutput.length > maxDiffSize) {
-        throw new GitError(
-          `Diff size (${diffOutput.length}) exceeds maximum (${maxDiffSize})`
-        );
+        throw new GitError(`Diff size (${diffOutput.length}) exceeds maximum (${maxDiffSize})`);
       }
 
       // Parse diff
@@ -111,10 +102,7 @@ export class GitRepositoryManager {
           };
         });
 
-      logger.info(
-        { fileCount: diffInfos.length },
-        'Parsed diff successfully'
-      );
+      logger.info({ fileCount: diffInfos.length }, 'Parsed diff successfully');
 
       return diffInfos;
     } catch (error) {
@@ -136,9 +124,7 @@ export class GitRepositoryManager {
       const diffOutput = await this.git.diff();
 
       if (diffOutput.length > maxDiffSize) {
-        throw new GitError(
-          `Diff size (${diffOutput.length}) exceeds maximum (${maxDiffSize})`
-        );
+        throw new GitError(`Diff size (${diffOutput.length}) exceeds maximum (${maxDiffSize})`);
       }
 
       const diffs = parseDiff(diffOutput);
@@ -166,10 +152,7 @@ export class GitRepositoryManager {
   /**
    * Get diff between current branch and base branch
    */
-  async getBranchDiff(
-    baseBranch: string,
-    maxDiffSize: number = 10485760
-  ): Promise<DiffInfo[]> {
+  async getBranchDiff(baseBranch: string, maxDiffSize: number = 10485760): Promise<DiffInfo[]> {
     try {
       const currentBranch = await this.git.revparse(['--abbrev-ref', 'HEAD']);
       return this.getDiff(currentBranch.trim(), baseBranch, maxDiffSize);

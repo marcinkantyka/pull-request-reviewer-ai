@@ -24,10 +24,7 @@ export interface GroupingOptions {
 /**
  * Groups files for context-aware review
  */
-export function groupFiles(
-  diffs: DiffInfo[],
-  options: GroupingOptions
-): FileGroup[] {
+export function groupFiles(diffs: DiffInfo[], options: GroupingOptions): FileGroup[] {
   if (!options.enabled) {
     // Return each file as isolated group
     return diffs.map((diff) => ({

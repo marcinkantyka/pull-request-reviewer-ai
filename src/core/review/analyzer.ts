@@ -4,11 +4,7 @@
 
 import type { DiffInfo, Issue } from '../../types/review.js';
 import type { LLMClient } from '../llm/client.js';
-import {
-  SYSTEM_PROMPT,
-  createReviewPrompt,
-  createGroupReviewPrompt,
-} from '../llm/prompts.js';
+import { SYSTEM_PROMPT, createReviewPrompt, createGroupReviewPrompt } from '../llm/prompts.js';
 import { LLMError } from '../../utils/errors.js';
 import { logger } from '../../utils/logger.js';
 import path from 'path';
@@ -27,11 +23,7 @@ export class ReviewAnalyzer {
     logger.debug({ filePath: diffInfo.filePath }, 'Analyzing file');
 
     try {
-      const prompt = createReviewPrompt(
-        diffInfo.filePath,
-        diffInfo.language,
-        diffInfo.diff
-      );
+      const prompt = createReviewPrompt(diffInfo.filePath, diffInfo.language, diffInfo.diff);
 
       const response = await this.llmClient.analyze({
         systemPrompt: SYSTEM_PROMPT,
@@ -50,7 +42,10 @@ export class ReviewAnalyzer {
       return issues;
     } catch (error) {
       logger.error(
-        { filePath: diffInfo.filePath, error: error instanceof Error ? error.message : String(error) },
+        {
+          filePath: diffInfo.filePath,
+          error: error instanceof Error ? error.message : String(error),
+        },
         'File analysis failed'
       );
 
@@ -167,12 +162,7 @@ export class ReviewAnalyzer {
       // Validate and normalize issues
       const issues: Issue[] = [];
       for (const item of parsed) {
-        if (
-          typeof item === 'object' &&
-          item !== null &&
-          'severity' in item &&
-          'message' in item
-        ) {
+        if (typeof item === 'object' && item !== null && 'severity' in item && 'message' in item) {
           const issue: Issue = {
             line: typeof item.line === 'number' ? item.line : 0,
             severity: this.normalizeSeverity(item.severity),
@@ -197,13 +187,7 @@ export class ReviewAnalyzer {
   }
 
   private normalizeSeverity(severity: unknown): Issue['severity'] {
-    const validSeverities: Issue['severity'][] = [
-      'critical',
-      'high',
-      'medium',
-      'low',
-      'info',
-    ];
+    const validSeverities: Issue['severity'][] = ['critical', 'high', 'medium', 'low', 'info'];
     const normalized = String(severity).toLowerCase();
     return validSeverities.includes(normalized as Issue['severity'])
       ? (normalized as Issue['severity'])
@@ -229,10 +213,7 @@ export class ReviewAnalyzer {
    * Parse issues from group review response
    * Returns a map of file path to issues
    */
-  private parseGroupIssues(
-    content: string,
-    files: DiffInfo[]
-  ): Map<string, Issue[]> {
+  private parseGroupIssues(content: string, files: DiffInfo[]): Map<string, Issue[]> {
     const issuesByFile = new Map<string, Issue[]>();
 
     // Initialize map with empty arrays
@@ -282,12 +263,7 @@ export class ReviewAnalyzer {
 
       // Parse issues and assign to files
       for (const item of parsed) {
-        if (
-          typeof item === 'object' &&
-          item !== null &&
-          'severity' in item &&
-          'message' in item
-        ) {
+        if (typeof item === 'object' && item !== null && 'severity' in item && 'message' in item) {
           const issue: Issue = {
             line: typeof item.line === 'number' ? item.line : 0,
             severity: this.normalizeSeverity(item.severity),
@@ -298,10 +274,7 @@ export class ReviewAnalyzer {
           };
 
           // Find which file this issue belongs to
-          const filePath =
-            typeof item.file === 'string'
-              ? item.file
-              : files[0]?.filePath || '';
+          const filePath = typeof item.file === 'string' ? item.file : files[0]?.filePath || '';
 
           // Try to match file path
           let targetFile = filePathLookup.get(filePath);
