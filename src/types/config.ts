@@ -30,6 +30,13 @@ export interface ReviewConfig {
   excludePatterns: string[];
   severityLevels: SeverityLevel[];
   categories: ReviewCategory[];
+  // Context-aware review options
+  contextAware?: boolean;
+  groupByDirectory?: boolean;
+  groupByFeature?: boolean;
+  maxGroupSize?: number;
+  directoryDepth?: number;
+  concurrency?: number;
 }
 
 export interface OutputConfig {

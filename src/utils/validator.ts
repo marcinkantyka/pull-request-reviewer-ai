@@ -42,6 +42,13 @@ export const ReviewConfigSchema = z.object({
       'bestPractices',
     ])
   ),
+  // Context-aware options (optional)
+  contextAware: z.boolean().optional(),
+  groupByDirectory: z.boolean().optional(),
+  groupByFeature: z.boolean().optional(),
+  maxGroupSize: z.number().positive().max(10).optional(),
+  directoryDepth: z.number().int().min(1).max(5).optional(),
+  concurrency: z.number().positive().max(10).optional(),
 });
 
 export const OutputConfigSchema = z.object({

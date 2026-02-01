@@ -52,6 +52,13 @@ export const DEFAULT_CONFIG: AppConfig = {
       'style',
       'bestPractices',
     ],
+    // Context-aware review options
+    contextAware: process.env.CONTEXT_AWARE === 'true' || true,
+    groupByDirectory: process.env.GROUP_BY_DIRECTORY !== 'false',
+    groupByFeature: process.env.GROUP_BY_FEATURE !== 'false',
+    maxGroupSize: parseInt(process.env.MAX_GROUP_SIZE || '5', 10),
+    directoryDepth: parseInt(process.env.DIRECTORY_DEPTH || '2', 10),
+    concurrency: parseInt(process.env.REVIEW_CONCURRENCY || '3', 10),
   },
   output: {
     defaultFormat: 'text',

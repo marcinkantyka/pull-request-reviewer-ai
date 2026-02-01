@@ -59,6 +59,14 @@ review:
     - maintainability
     - style
     - bestPractices
+  
+  # Context-aware review options
+  contextAware: true          # Enable multi-file context review
+  groupByDirectory: true      # Group files in same directory
+  groupByFeature: true        # Group files by feature/module
+  maxGroupSize: 5             # Maximum files per group
+  directoryDepth: 2            # Directory levels to consider for grouping
+  concurrency: 3              # Number of groups/files to review in parallel
 
 output:
   defaultFormat: "text"
