@@ -61,7 +61,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ secrets.DOCKER_USERNAME }}/pr-review-cli
+          images: ${{ secrets.DOCKER_USERNAME }}/pull-request-reviewer-ai
           tags: |
             type=raw,value=${{ github.event.inputs.docker_tag }}
             type=raw,value=${{ github.event.inputs.version }}

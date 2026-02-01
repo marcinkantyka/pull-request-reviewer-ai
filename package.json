@@ -1,5 +1,5 @@
 {
-  "name": "pr-review-cli",
+  "name": "pull-request-reviewer-ai",
   "version": "1.0.0",
   "description": "Offline-first Pull Request review CLI tool using local LLM",
   "type": "module",
@@ -36,6 +36,14 @@
   ],
   "author": "",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/marcinkantyka/pull-request-reviewer-ai.git"
+  },
+  "bugs": {
+    "url": "https://github.com/marcinkantyka/pull-request-reviewer-ai/issues"
+  },
+  "homepage": "https://github.com/marcinkantyka/pull-request-reviewer-ai#readme",
   "engines": {
     "node": ">=18.0.0"
   },

@@ -1,7 +1,7 @@
 # PR Review CLI
 
-[![CI](https://github.com/marcinkantyka/pr-review-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/marcinkantyka/pr-review-cli/actions/workflows/ci.yml)
-[![Release](https://github.com/marcinkantyka/pr-review-cli/actions/workflows/release.yml/badge.svg)](https://github.com/marcinkantyka/pr-review-cli/actions/workflows/release.yml)
+[![CI](https://github.com/marcinkantyka/pull-request-reviewer-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/marcinkantyka/pull-request-reviewer-ai/actions/workflows/ci.yml)
+[![Release](https://github.com/marcinkantyka/pull-request-reviewer-ai/actions/workflows/release.yml/badge.svg)](https://github.com/marcinkantyka/pull-request-reviewer-ai/actions/workflows/release.yml)
 
 A CLI tool that uses local LLMs to review your code changes. Everything runs offline on your machine—no data leaves your computer.
 
@@ -14,14 +14,14 @@ Reviews code changes between git branches using a local LLM. It analyzes diffs, 
 ### From npm
 
 ```bash
-npm install -g pr-review-cli
+npm install -g pull-request-reviewer-ai
 ```
 
 ### From source
 
 ```bash
-git clone https://github.com/marcinkantyka/pr-review-cli.git
-cd pr-review-cli
+git clone https://github.com/marcinkantyka/pull-request-reviewer-ai.git
+cd pull-request-reviewer-ai
 npm install
 npm run build
 ```
@@ -144,13 +144,13 @@ Set the `provider` and `endpoint` in your config or via environment variables.
 
 ```bash
 # Build
-docker build -f docker/Dockerfile -t pr-review-cli .
+docker build -f docker/Dockerfile -t pull-request-reviewer-ai .
 
 # Run
 docker run --rm \
   -v $(pwd):/repos:ro \
   -e LLM_ENDPOINT=http://host.docker.internal:11434 \
-  pr-review-cli compare feature main
+  pull-request-reviewer-ai compare feature main
 ```
 
 See `docker/docker-compose.yml` for a complete setup with Ollama.
@@ -182,7 +182,7 @@ jobs:
         with:
           node-version: '20'
 
-      - run: npm install -g pr-review-cli
+      - run: npm install -g pull-request-reviewer-ai
       - run: |
           curl http://localhost:11434/api/pull -d '{"name": "deepseek-coder:1.3b"}'
       - run: |
