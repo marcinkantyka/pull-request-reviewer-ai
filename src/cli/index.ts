@@ -8,13 +8,29 @@ import { createCompareCommand } from './commands/compare.js';
 import { createReviewCommand } from './commands/review.js';
 import { createConfigCommand } from './commands/config.js';
 import { logger } from '../utils/logger.js';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Read version from package.json
+let version = '1.0.0';
+try {
+  const packagePath = join(__dirname, '../../package.json');
+  const packageJson = JSON.parse(readFileSync(packagePath, 'utf-8'));
+  version = packageJson.version || '1.0.0';
+} catch {
+  // Fallback to default version
+}
 
 const program = new Command();
 
 program
   .name('pr-review')
   .description('Offline-first Pull Request review CLI tool using local LLM')
-  .version('1.0.0');
+  .version(version);
 
 // Add commands
 program.addCommand(createCompareCommand());
