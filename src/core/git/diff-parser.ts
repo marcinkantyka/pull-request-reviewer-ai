@@ -9,11 +9,11 @@ import type { GitDiff } from './types.js';
  */
 export function parseDiff(diffOutput: string): GitDiff[] {
   const diffs: GitDiff[] = [];
-  
+
   if (!diffOutput || diffOutput.trim().length === 0) {
     return diffs;
   }
-  
+
   const lines = diffOutput.split('\n');
 
   let currentDiff: Partial<GitDiff> | null = null;

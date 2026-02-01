@@ -62,6 +62,7 @@ export LLM_MODEL=deepseek-coder:6.7b
 **"LLM provider is not available"**
 
 Make sure Ollama is running:
+
 ```bash
 ollama serve
 curl http://localhost:11434/api/tags

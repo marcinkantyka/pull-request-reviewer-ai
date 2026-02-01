@@ -72,7 +72,7 @@ llm:
 review:
   maxFiles: 50
   maxLinesPerFile: 1000
-  contextAware: true  # Groups related files for better context
+  contextAware: true # Groups related files for better context
   excludePatterns:
     - '*.lock'
     - 'node_modules/**'
@@ -209,6 +209,7 @@ The tool enforces localhost-only connections. Any attempt to connect to external
 **"LLM provider is not available"**
 
 Make sure your LLM server is running:
+
 ```bash
 # For Ollama
 ollama serve
@@ -218,14 +219,16 @@ curl http://localhost:11434/api/tags
 **Timeout errors**
 
 Increase the timeout:
+
 ```bash
 pr-review compare feature main --timeout 120
 ```
 
 Or in config:
+
 ```yaml
 llm:
-  timeout: 120000  # 2 minutes
+  timeout: 120000 # 2 minutes
 ```
 
 **Network security errors**
