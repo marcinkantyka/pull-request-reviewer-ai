@@ -6,9 +6,9 @@ services:
     image: vllm/vllm-openai:latest
     container_name: pr-review-vllm
     volumes:
-      - ./models:/models:ro  # Pre-downloaded models
+      - ./models:/models:ro # Pre-downloaded models
     ports:
-      - "8000:8000"
+      - '8000:8000'
     networks:
       - pr-review-network
     command: >
@@ -26,7 +26,7 @@ services:
     volumes:
       - ./models:/models:ro
     ports:
-      - "8080:8080"
+      - '8080:8080'
     networks:
       - pr-review-network
     command: >
@@ -41,15 +41,15 @@ services:
       dockerfile: docker/Dockerfile
     container_name: pr-review-cli
     depends_on:
-      - vllm  # or llamacpp
+      - vllm # or llamacpp
     volumes:
       - ./repos:/repos:ro
       - ./config:/config:ro
       - ./output:/output
     environment:
       # Switch between providers
-      - LLM_PROVIDER=vllm  # or llamacpp, or ollama
-      - LLM_ENDPOINT=http://vllm:8000  # or http://llamacpp:8080
+      - LLM_PROVIDER=vllm # or llamacpp, or ollama
+      - LLM_ENDPOINT=http://vllm:8000 # or http://llamacpp:8080
       - LLM_MODEL=deepseek-coder-6.7b-instruct
       - CONFIG_PATH=/config/config.yml
     networks:
@@ -63,7 +63,7 @@ services:
 networks:
   pr-review-network:
     driver: bridge
-    internal: true  # No internet access
+    internal: true # No internet access
     ipam:
       config:
         - subnet: 172.28.0.0/16

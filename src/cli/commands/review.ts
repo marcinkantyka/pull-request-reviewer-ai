@@ -46,7 +46,10 @@ export function createReviewCommand(): Command {
 
         // Override config with CLI options
         if (options.timeout) {
-          config.llm.timeout = parseInt(options.timeout, 10) * 1000;
+          config.llm.timeout =
+            (typeof options.timeout === 'string'
+              ? parseInt(options.timeout, 10)
+              : options.timeout) * 1000;
         }
         if (options.maxFiles) {
           config.review.maxFiles = options.maxFiles;

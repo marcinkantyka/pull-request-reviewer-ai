@@ -18,22 +18,16 @@ const LOCALHOST_ADDRESSES = ['localhost', '127.0.0.1', '::1', '0.0.0.0'];
  * @param allowedHosts - List of allowed hostnames
  * @throws NetworkSecurityError if endpoint is not local
  */
-export function validateEndpoint(
-  endpoint: string,
-  allowedHosts: string[]
-): void {
+export function validateEndpoint(endpoint: string, allowedHosts: string[]): void {
   let url: URL;
   try {
     url = new URL(endpoint);
   } catch (error) {
-    throw new NetworkSecurityError(
-      `Invalid endpoint URL: ${endpoint}`,
-      error
-    );
+    throw new NetworkSecurityError(`Invalid endpoint URL: ${endpoint}`, error);
   }
 
   let hostname = url.hostname.toLowerCase();
-  
+
   // Strip brackets from IPv6 addresses (e.g., [::1] -> ::1)
   if (hostname.startsWith('[') && hostname.endsWith(']')) {
     hostname = hostname.slice(1, -1);
@@ -43,9 +37,7 @@ export function validateEndpoint(
   const isLocalhost = LOCALHOST_ADDRESSES.includes(hostname);
 
   // Check if it's in allowed list
-  const isAllowed = allowedHosts.some(
-    (allowed) => hostname === allowed.toLowerCase()
-  );
+  const isAllowed = allowedHosts.some((allowed) => hostname === allowed.toLowerCase());
 
   if (!isLocalhost && !isAllowed) {
     const error = new NetworkSecurityError(
@@ -72,25 +64,38 @@ export function validateEndpoint(
  * @returns Secure fetch function
  */
 export function createSecureFetch(allowedHosts: string[]) {
-  return async function secureFetch(
-    url: string,
-    options?: RequestInit
-  ): Promise<Response> {
+  return async function secureFetch(url: string, options?: RequestInit): Promise<Response> {
     // Validate before making request
     validateEndpoint(url, allowedHosts);
 
     // Log the request (for audit trail)
     logger.info({ url }, 'Connecting to local endpoint');
 
-    const timeout = options?.signal || AbortSignal.timeout(60000);
+    // Create timeout controller if no signal provided
+    let timeoutController: AbortController | null = null;
+    let timeoutId: NodeJS.Timeout | null = null;
+
+    if (!options?.signal) {
+      timeoutController = new AbortController();
+      timeoutId = setTimeout(() => {
+        timeoutController?.abort();
+      }, 60000);
+    }
 
     try {
-      return await fetch(url, {
+      const response = await fetch(url, {
         ...options,
-        signal: timeout,
+        signal: options?.signal || timeoutController?.signal,
       });
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      return response;
     } catch (error) {
-      if (error instanceof Error && error.name === 'TimeoutError') {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      if (error instanceof Error && error.name === 'AbortError') {
         throw new Error('LLM request timed out');
       }
       throw error;

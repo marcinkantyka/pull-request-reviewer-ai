@@ -7,7 +7,7 @@ services:
     volumes:
       - ollama-data:/root/.ollama
     ports:
-      - "11434:11434"
+      - '11434:11434'
     environment:
       - OLLAMA_HOST=0.0.0.0
     networks:
@@ -29,9 +29,9 @@ services:
     depends_on:
       - ollama
     volumes:
-      - ./repos:/repos:ro           # Mount repos as read-only
-      - ./config:/config:ro          # Mount config
-      - ./output:/output             # Output directory
+      - ./repos:/repos:ro # Mount repos as read-only
+      - ./config:/config:ro # Mount config
+      - ./output:/output # Output directory
     environment:
       - LLM_ENDPOINT=http://ollama:11434
       - LLM_MODEL=deepseek-coder:6.7b
@@ -41,7 +41,7 @@ services:
     networks:
       - pr-review-network
     # SECURITY: No external network access, only internal bridge network
-    dns: []  # Disable DNS resolution
+    dns: [] # Disable DNS resolution
     network_mode: bridge
     # Prevent outbound connections
     cap_drop:
@@ -57,7 +57,7 @@ services:
 networks:
   pr-review-network:
     driver: bridge
-    internal: true  # CRITICAL: No external connectivity
+    internal: true # CRITICAL: No external connectivity
     ipam:
       config:
         - subnet: 172.28.0.0/16

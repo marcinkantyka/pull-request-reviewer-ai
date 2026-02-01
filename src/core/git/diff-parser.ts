@@ -9,6 +9,11 @@ import type { GitDiff } from './types.js';
  */
 export function parseDiff(diffOutput: string): GitDiff[] {
   const diffs: GitDiff[] = [];
+
+  if (!diffOutput || diffOutput.trim().length === 0) {
+    return diffs;
+  }
+
   const lines = diffOutput.split('\n');
 
   let currentDiff: Partial<GitDiff> | null = null;
@@ -18,13 +23,13 @@ export function parseDiff(diffOutput: string): GitDiff[] {
   let diffLines: string[] = [];
 
   for (let i = 0; i < lines.length; i++) {
+    // eslint-disable-next-line security/detect-object-injection
     const line = lines[i];
 
     // File header
     if (line.startsWith('diff --git')) {
       // Save previous diff if exists
       if (currentDiff) {
-        // eslint-disable-next-line security/detect-object-injection
         diffs.push({
           ...currentDiff,
           additions,

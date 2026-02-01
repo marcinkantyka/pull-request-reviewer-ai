@@ -29,19 +29,17 @@ export const ReviewConfigSchema = z.object({
   maxFiles: z.number().positive(),
   maxLinesPerFile: z.number().positive(),
   excludePatterns: z.array(z.string()),
-  severityLevels: z.array(
-    z.enum(['critical', 'high', 'medium', 'low', 'info'])
-  ),
+  severityLevels: z.array(z.enum(['critical', 'high', 'medium', 'low', 'info'])),
   categories: z.array(
-    z.enum([
-      'security',
-      'bugs',
-      'performance',
-      'maintainability',
-      'style',
-      'bestPractices',
-    ])
+    z.enum(['security', 'bugs', 'performance', 'maintainability', 'style', 'bestPractices'])
   ),
+  // Context-aware options (optional)
+  contextAware: z.boolean().optional(),
+  groupByDirectory: z.boolean().optional(),
+  groupByFeature: z.boolean().optional(),
+  maxGroupSize: z.number().positive().max(10).optional(),
+  directoryDepth: z.number().int().min(1).max(5).optional(),
+  concurrency: z.number().positive().max(10).optional(),
 });
 
 export const OutputConfigSchema = z.object({
@@ -86,16 +84,13 @@ export function validateConfig(config: unknown): AppConfig {
 /**
  * Validates file path to prevent path traversal attacks
  */
-import path from 'path';
 
 export function validateFilePath(filePath: string, basePath: string): string {
   const resolved = path.resolve(basePath, filePath);
   const base = path.resolve(basePath);
 
   if (!resolved.startsWith(base)) {
-    throw new ValidationError(
-      `Path traversal detected: ${filePath} resolves outside base path`
-    );
+    throw new ValidationError(`Path traversal detected: ${filePath} resolves outside base path`);
   }
 
   return resolved;

@@ -40,10 +40,7 @@ export function calculateScore(issues: Issue[]): number {
 /**
  * Generate review summary from issues
  */
-export function generateSummary(
-  filesReviewed: number,
-  issues: Issue[]
-): ReviewSummary {
+export function generateSummary(filesReviewed: number, issues: Issue[]): ReviewSummary {
   const severityCounts = {
     critical: 0,
     high: 0,

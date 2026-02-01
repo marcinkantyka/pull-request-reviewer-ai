@@ -7,12 +7,7 @@ export class PRReviewError extends Error {
   public readonly details?: unknown;
   public readonly recoverable: boolean;
 
-  constructor(
-    message: string,
-    code: string,
-    details?: unknown,
-    recoverable = false
-  ) {
+  constructor(message: string, code: string, details?: unknown, recoverable = false) {
     super(message);
     this.name = this.constructor.name;
     this.code = code;

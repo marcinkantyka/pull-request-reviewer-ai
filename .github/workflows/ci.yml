@@ -1,97 +1,115 @@
-name: Test PR Review CLI
+name: CI
 
 on:
   push:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20'
 
 jobs:
-  lint:
+  lint-and-format:
+    name: Lint & Format Check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
-      - name: Run linter
+
+      - name: Run ESLint
         run: npm run lint
-      
-      - name: Check formatting
+
+      - name: Check code formatting
         run: npm run format:check
 
+      - name: Type check
+        run: npm run typecheck
+
   test:
+    name: Test (Node.js ${{ matrix.node-version }})
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         node-version: [18, 20, 21]
-    
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Full history for git tests
-      
+          fetch-depth: 0 # Full history for git tests
+
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Run unit tests
         run: npm run test:unit
-      
+
       - name: Run integration tests
         run: npm run test:integration
-      
-      - name: Generate coverage
+
+      - name: Generate test coverage
         run: npm run test:coverage
-      
+
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           file: ./coverage/lcov.info
           flags: unittests
           name: node-${{ matrix.node-version }}
+          token: ${{ secrets.CODECOV_TOKEN }}
+        continue-on-error: true
 
-  test-docker:
+  docker-build:
+    name: Docker Build & Test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      
+
       - name: Build Docker image
         run: docker build -t pr-review-cli:test -f docker/Dockerfile .
-      
+
       - name: Test Docker image
         run: |
           docker run --rm pr-review-cli:test --version || true
           docker run --rm pr-review-cli:test --help
 
-  security-scan:
+  security-audit:
+    name: Security Audit
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
-      - name: Run npm audit
-        run: npm audit --audit-level=moderate
+
+      - name: Run npm audit (high/critical only)
+        run: npm audit --audit-level=high

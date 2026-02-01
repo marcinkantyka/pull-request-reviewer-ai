@@ -10,6 +10,7 @@ import { LLMClient } from '../llm/client.js';
 import { createLLMProvider } from '../llm/providers.js';
 import { logger } from '../../utils/logger.js';
 import { minimatch } from 'minimatch';
+import { groupFiles, type FileGroup, type GroupingOptions } from './file-grouper.js';
 
 export class ReviewEngine {
   private llmClient: LLMClient;
@@ -23,11 +24,7 @@ export class ReviewEngine {
       config.llm.retries || 3,
       config.llm.retryDelay || 1000
     );
-    this.analyzer = new ReviewAnalyzer(
-      this.llmClient,
-      config.llm.model,
-      config.llm.temperature
-    );
+    this.analyzer = new ReviewAnalyzer(this.llmClient, config.llm.model, config.llm.temperature);
   }
 
   /**
@@ -39,10 +36,7 @@ export class ReviewEngine {
     targetBranch: string
   ): Promise<ReviewResult> {
     const startTime = Date.now();
-    logger.info(
-      { fileCount: diffs.length, sourceBranch, targetBranch },
-      'Starting code review'
-    );
+    logger.info({ fileCount: diffs.length, sourceBranch, targetBranch }, 'Starting code review');
 
     // Filter files based on exclude patterns
     const filteredDiffs = this.filterFiles(diffs);
@@ -50,13 +44,36 @@ export class ReviewEngine {
     // Limit number of files
     const limitedDiffs = filteredDiffs.slice(0, this.config.review.maxFiles);
 
-    logger.info(
-      { fileCount: limitedDiffs.length },
-      'Files to review after filtering'
-    );
+    logger.info({ fileCount: limitedDiffs.length }, 'Files to review after filtering');
 
-    // Review files (with concurrency limit)
-    const fileReviews = await this.reviewFiles(limitedDiffs);
+    // Handle empty diffs
+    if (limitedDiffs.length === 0) {
+      logger.info('No files to review after filtering');
+      const duration = Date.now() - startTime;
+      return {
+        summary: {
+          filesReviewed: 0,
+          totalIssues: 0,
+          critical: 0,
+          high: 0,
+          medium: 0,
+          low: 0,
+          info: 0,
+          score: 10,
+        },
+        files: [],
+        metadata: {
+          timestamp: new Date().toISOString(),
+          sourceBranch,
+          targetBranch,
+          llmModel: this.config.llm.model,
+          duration,
+        },
+      };
+    }
+
+    // Review files (with context-aware grouping if enabled)
+    const fileReviews = await this.reviewFilesWithContextAwareGrouping(limitedDiffs);
 
     // Generate summary
     const allIssues = fileReviews.flatMap((fr) => fr.issues);
@@ -99,7 +116,7 @@ export class ReviewEngine {
         if (minimatch(diff.filePath, pattern)) {
           logger.debug({ filePath: diff.filePath, pattern }, 'File excluded');
           return false;
-      }
+        }
       }
 
       // Check max lines per file
@@ -117,40 +134,144 @@ export class ReviewEngine {
   }
 
   /**
-   * Review multiple files with concurrency control
+   * Review files with context-aware grouping
+   * Groups related files together for cross-file analysis
    */
-  private async reviewFiles(diffs: DiffInfo[]): Promise<FileReview[]> {
-    const concurrency = 3; // Review 3 files at a time
+  private async reviewFilesWithContextAwareGrouping(diffs: DiffInfo[]): Promise<FileReview[]> {
+    const groupingOptions: GroupingOptions = {
+      enabled: this.config.review.contextAware ?? true,
+      groupByDirectory: this.config.review.groupByDirectory ?? true,
+      groupByFeature: this.config.review.groupByFeature ?? true,
+      maxGroupSize: this.config.review.maxGroupSize ?? 5,
+      directoryDepth: this.config.review.directoryDepth ?? 2,
+    };
+
+    // Group related files
+    const groups = groupFiles(diffs, groupingOptions);
+
+    const concurrency = this.config.review.concurrency ?? 3;
     const results: FileReview[] = [];
 
-    for (let i = 0; i < diffs.length; i += concurrency) {
-      const batch = diffs.slice(i, i + concurrency);
-      const batchResults = await Promise.allSettled(
-        batch.map((diff) => this.reviewSingleFile(diff))
-      );
+    // Process groups in batches with concurrency control
+    for (let i = 0; i < groups.length; i += concurrency) {
+      const batch = groups.slice(i, i + concurrency);
+      const batchResults = await Promise.allSettled(batch.map((group) => this.reviewGroup(group)));
 
       for (const result of batchResults) {
         if (result.status === 'fulfilled') {
-          results.push(result.value);
+          results.push(...result.value);
         } else {
-          logger.error(
-            { error: result.reason },
-            'Failed to review file'
-          );
-          // Create empty review for failed file
-          const diff = batch[batchResults.indexOf(result)];
-          results.push({
-            path: diff.filePath,
-            language: diff.language,
-            additions: diff.additions,
-            deletions: diff.deletions,
-            issues: [],
-          });
+          logger.error({ error: result.reason }, 'Failed to review group');
+          // Create empty reviews for failed group
+          const groupIndex = batchResults.indexOf(result);
+          // eslint-disable-next-line security/detect-object-injection
+          const group = batch[groupIndex];
+          if (group) {
+            for (const file of group.files) {
+              results.push({
+                path: file.filePath,
+                language: file.language,
+                additions: file.additions,
+                deletions: file.deletions,
+                issues: [],
+              });
+            }
+          }
         }
       }
     }
 
     return results;
+  }
+
+  /**
+   * Review a file group (either as a group or individually)
+   */
+  private async reviewGroup(group: FileGroup): Promise<FileReview[]> {
+    if (group.groupType === 'isolated' || group.files.length === 1) {
+      // Review individually
+      return [await this.reviewSingleFile(group.files[0])];
+    }
+
+    // Review as a group for context awareness
+    const groupResult = await this.reviewGroupWithContext(group);
+    if (groupResult) {
+      return groupResult;
+    }
+
+    // Fallback to individual reviews if group review failed
+    return this.reviewGroupFilesIndividually(group.files);
+  }
+
+  /**
+   * Review a group of files together with context awareness
+   * Returns null if review fails (should fallback to individual reviews)
+   */
+  private async reviewGroupWithContext(group: FileGroup): Promise<FileReview[] | null> {
+    // Type guard: ensure groupType is not 'isolated'
+    if (group.groupType === 'isolated') {
+      return null;
+    }
+
+    try {
+      logger.debug(
+        {
+          groupType: group.groupType,
+          context: group.context,
+          fileCount: group.files.length,
+        },
+        'Reviewing file group with context'
+      );
+
+      const issuesByFile = await this.analyzer.analyzeFileGroup(
+        group.files,
+        group.groupType, // TypeScript now knows this is 'directory' | 'feature'
+        group.context
+      );
+
+      // Convert to FileReview objects
+      return group.files.map((file) => ({
+        path: file.filePath,
+        language: file.language,
+        additions: file.additions,
+        deletions: file.deletions,
+        issues: issuesByFile.get(file.filePath) || [],
+      }));
+    } catch (error) {
+      logger.error(
+        {
+          groupType: group.groupType,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        'Group review failed, falling back to individual reviews'
+      );
+      return null;
+    }
+  }
+
+  /**
+   * Review files individually as fallback
+   */
+  private async reviewGroupFilesIndividually(files: DiffInfo[]): Promise<FileReview[]> {
+    const results = await Promise.allSettled(files.map((file) => this.reviewSingleFile(file)));
+
+    return results.map((result, index) => {
+      if (result.status === 'fulfilled') {
+        return result.value;
+      }
+
+      // Return empty review for failed file
+      // eslint-disable-next-line security/detect-object-injection
+      const file = files[index];
+      logger.warn({ filePath: file.filePath }, 'Failed to review file individually');
+      return {
+        path: file.filePath,
+        language: file.language,
+        additions: file.additions,
+        deletions: file.deletions,
+        issues: [],
+      };
+    });
   }
 
   /**
