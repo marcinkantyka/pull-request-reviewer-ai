@@ -1,56 +1,66 @@
 {
-    "name": "local-pr-reviewer",
-    "version": "1.0.0",
-    "description": "AI-powered branch code review running 100% locally on your M3 Mac - optimized for JavaScript/TypeScript",
-    "type": "module",
-    "main": "dist/index.js",
-    "bin": {
-      "review-pr": "./dist/index.js"
-    },
-    "scripts": {
-      "build": "tsc",
-      "dev": "tsc --watch",
-      "review": "npm run build && node dist/index.js",
-      "setup": "npm install && npm run build",
-      "test": "npm run build",
-      "test:ci": "npm install && npm run build",
-      "clean": "rm -rf dist node_modules",
-      "rebuild": "./scripts/rebuild.sh",
-      "watch": "./scripts/watch.sh",
-      "docker:build": "docker-compose build",
-      "docker:up": "docker-compose up -d ollama",
-      "docker:down": "docker-compose down",
-      "docker:logs": "docker-compose logs -f",
-      "model:pull": "./scripts/model-pull.sh",
-      "model:list": "docker-compose exec ollama ollama list"
-    },
-    "keywords": [
-      "code-review",
-      "ai",
-      "llm",
-      "typescript",
-      "javascript",
-      "pr-review",
-      "local",
-      "privacy",
-      "ollama",
-      "qwen"
-    ],
-    "author": "",
-    "license": "MIT",
-    "dependencies": {
-      "ollama": "^0.5.9"
-    },
-    "devDependencies": {
-      "@types/node": "^20.11.0",
-      "typescript": "^5.3.3"
-    },
-    "engines": {
-      "node": ">=20.0.0",
-      "npm": ">=10.0.0"
-    },
-    "repository": {
-      "type": "git",
-      "url": ""
-    }
+  "name": "pr-review-cli",
+  "version": "1.0.0",
+  "description": "Offline-first Pull Request review CLI tool using local LLM",
+  "type": "module",
+  "main": "dist/cli/index.js",
+  "bin": {
+    "pr-review": "./dist/cli/index.js"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration",
+    "test:e2e": "vitest run tests/e2e",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src tests",
+    "lint:fix": "eslint src tests --fix",
+    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist coverage",
+    "prepublishOnly": "npm run build && npm run test"
+  },
+  "keywords": [
+    "pr-review",
+    "code-review",
+    "llm",
+    "offline",
+    "cli",
+    "git",
+    "ollama",
+    "self-hosted"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "commander": "^11.1.0",
+    "cosmiconfig": "^9.0.0",
+    "simple-git": "^3.22.0",
+    "zod": "^3.22.4",
+    "pino": "^8.17.2",
+    "pino-pretty": "^10.3.1",
+    "chalk": "^5.3.0",
+    "minimatch": "^10.0.1",
+    "js-yaml": "^4.1.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.18.0",
+    "@types/node": "^20.11.5",
+    "@types/js-yaml": "^4.0.9",
+    "typescript-eslint": "^8.20.0",
+    "eslint": "^9.39.2",
+    "eslint-plugin-security": "^3.0.1",
+    "prettier": "^3.2.4",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3",
+    "vitest": "^2.1.8",
+    "@vitest/coverage-v8": "^2.1.8"
   }
+}

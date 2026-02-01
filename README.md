@@ -1,382 +1,617 @@
-# Local PR Reviewer
+# PR Review CLI
 
-AI-powered code review that runs 100% on your MacBook M3. Zero data leakage. Optimized for JavaScript/TypeScript.
-
-**Version:** 1.0.0 (see [package.json](package.json))
+A production-ready, fully self-hosted, offline-first Pull Request review CLI tool in TypeScript that uses local LLM for code analysis. The solution works completely offline after initial setup and ensures no code or data leaves your local machine.
 
 ## Features
 
-- **100% Private** - Code never leaves your machine
-- **Network Isolated** - PR reviewer container has zero external access
-- **JS/TS Optimized** - Qwen2.5-Coder-7B trained on TypeScript
-- **M3 Optimized** - Perfect for 16GB MacBook M3
-- **Fast Reviews** - ~30 seconds per PR
-- **Zero Cost** - No API fees, runs locally
-
-## Quick Start
-
-```bash
-# 1. Clone this repo
-git clone <this-repo-url> pr-reviewer
-cd pr-reviewer
-
-# 2. Run setup (one-time, ~5 minutes)
-./scripts/setup.sh
-
-# 3. Review any PR (run from the repository you want to review)
-cd /path/to/your/repo
-/path/to/pr-reviewer/scripts/review.sh
-
-# Or pass the repository path as an argument
-/path/to/pr-reviewer/scripts/review.sh /path/to/your/repo
-```
-
-That's it! Select a branch from the list and get AI-powered feedback.
-
-## Prerequisites
-
-- **Hardware**: MacBook M3 with 16GB RAM
-- **Software**: 
-  - Docker Desktop for Mac
-  - Git (usually pre-installed on macOS)
-  - 7GB free disk space
+- 🔒 **Offline-First**: Works completely offline after initial setup
+- 🛡️ **Network Security**: Enforces localhost-only connections, no data leaves your machine
+- 🤖 **Multiple LLM Providers**: Supports Ollama, vLLM, llama.cpp, and OpenAI-compatible APIs
+- 📊 **Multiple Output Formats**: Human-readable terminal output, JSON, Markdown
+- ⚙️ **Flexible Configuration**: YAML-based configuration with environment variable overrides
+- 🐳 **Docker Support**: Multi-stage builds with security best practices
+- ✅ **Production Ready**: Comprehensive error handling, logging, and testing
 
 ## Installation
 
-### Step 1: Install Dependencies
+### npm (Global Installation)
 
 ```bash
-# Install Docker Desktop
-# Download from: https://www.docker.com/products/docker-desktop
-
-# Git is usually pre-installed on macOS
-# Verify: git --version
+npm install -g pr-review-cli
 ```
 
-### Step 2: Setup PR Reviewer
+After installation, use the `pr-review` command directly.
+
+### From Source
 
 ```bash
-# Clone this repository
-git clone <this-repo> pr-reviewer
-cd pr-reviewer
-
-# Make scripts executable
-chmod +x scripts/*.sh
-
-# Run setup script
-./scripts/setup.sh
+git clone https://github.com/your-org/pr-review-cli.git
+cd pr-review-cli
+npm install
+npm run build
 ```
 
-The setup script will:
-1. Check system requirements (macOS, RAM, disk space)
-2. Check Docker is running
-3. Check Git is installed
-4. Build Docker containers
-5. Download Qwen2.5-Coder-7B model (~4.7GB)
-6. Verify network isolation
-7. Test that the model is responding
+**Running from source:**
+After building, use `node dist/cli/index.js` instead of `pr-review`:
+```bash
+node dist/cli/index.js --help
+node dist/cli/index.js review --base main
+```
 
-## Usage
+**Optional - Link globally for easier access:**
+```bash
+npm link
+# Now you can use 'pr-review' command
+pr-review --help
+```
 
-### Review a Branch
-
-Run the review script from the repository you want to review:
+### Docker
 
 ```bash
-# Option 1: Run from the repository directory
-cd /path/to/your/repo
-/path/to/pr-reviewer/scripts/review.sh
-
-# Option 2: Pass repository path as argument
-/path/to/pr-reviewer/scripts/review.sh /path/to/your/repo
+docker pull your-org/pr-review-cli:latest
 ```
 
-This will:
-1. Fetch all remote branches (on the host, before mounting)
-2. Show you a list of branches (excluding the base branch)
-3. Let you select which branch to review
-4. Compare the branch against the base branch (via git, locally)
-5. Analyze the diff with local AI
-6. Save review to `reviews/` folder
+## Quick Start
 
-### Example Output
+### 1. Set up Local LLM
 
-```
-Local PR Reviewer
-==================
-
-Security: All code analysis happens locally
-Network: Isolated - no external connections
-Model: qwen2.5-coder:7b
-
-Connecting to Ollama...
-Connected to Ollama
-
-Checking for model: qwen2.5-coder:7b...
-Model is ready
-
-Fetching branches...
-Found 2 branch(es) to review
-
-Available Branches:
-
-1. Add user authentication
-   Author: johndoe | Branch: feature/auth -> main
-
-2. Fix memory leak in cache
-   Author: janedoe | Branch: bugfix/cache-leak -> main
-
-Select PR number (or 0 to cancel): 1
-
-Selected: Add user authentication
-
-Files changed: 5
-  src/auth/login.ts
-  src/auth/types.ts
-  src/middleware/auth.ts
-  tests/auth.test.ts
-  package.json
-
-Changes:
-  Files: 5
-  Insertions: +234
-  Deletions: -12
-
-Diff size: 12.3 KB
-
-Proceed with AI review? (y/n): y
-
-Analyzing code with Qwen2.5-Coder...
-
-Analysis completed in 28.5s
-
-================================================================================
-REVIEW RESULTS
-================================================================================
-
-[AI-generated review content]
-
-================================================================================
-
-Review saved to: /reviews/review-PR1-2026-01-15T10-30-45.md
-```
-
-## Project Structure
-
-```
-pr-reviewer/
-├── .github/
-│   └── workflows/
-│       └── test.yml          # CI/CD tests
-├── scripts/
-│   ├── setup.sh              # Initial setup
-│   ├── review.sh             # Run reviews
-│   ├── rebuild.sh            # Manual rebuild
-│   ├── watch.sh              # Auto-rebuild on changes
-│   └── verify-isolation.sh   # Security check
-├── src/
-│   ├── index.ts              # Main entry point
-│   ├── reviewer.ts           # Review logic
-│   ├── github.ts             # Git branch operations
-│   └── types.ts              # Type definitions
-├── docs/
-│   ├── Security.md           # Security documentation
-│   └── # Troubleshooting Guide  # Troubleshooting
-├── reviews/                  # Generated reviews
-├── compose.yaml              # Container config
-├── Dockerfile                # Container image
-├── package.json              # Node.js dependencies
-├── tsconfig.json             # TypeScript config
-└── README.md                 # This file
-```
-
-## Security Guarantees
-
-### How We Ensure Privacy
-
-1. **Docker Network Isolation**
-   - PR reviewer container is on an isolated network (no internet access)
-   - Ollama container has internet access only for pulling models
-   - Once models are downloaded, Ollama can operate without internet
-
-2. **No Cloud APIs**
-   - Ollama runs locally
-   - Models are downloaded once, used offline
-   - No telemetry or analytics
-
-3. **Read-Only Repo Access**
-   - Repository is mounted as read-only
-   - No modifications to your code
-
-### Verify It Yourself
+#### Using Ollama (Recommended)
 
 ```bash
-# Test network isolation
-./scripts/verify-isolation.sh
+# Install Ollama
+curl -fsSL https://ollama.com/install.sh | sh
 
-# Monitor network traffic (should see ZERO external calls from pr-reviewer)
-sudo tcpdump -i any -n 'not host 127.0.0.1' &
-./scripts/review.sh
-# Stop tcpdump - you'll see no packets to internet from pr-reviewer container
+# Pull a code review model
+ollama pull deepseek-coder:6.7b
+```
+
+#### Using vLLM
+
+```bash
+docker run --gpus all -p 8000:8000 vllm/vllm-openai:latest \
+  --model deepseek-ai/deepseek-coder-6.7b-instruct
+```
+
+#### Using llama.cpp Server
+
+```bash
+docker run -p 8080:8080 ghcr.io/ggerganov/llama.cpp:server \
+  -m /models/deepseek-coder-6.7b-instruct-q4_k_m.gguf \
+  --host 0.0.0.0 --port 8080
+```
+
+### 2. Configure PR Review CLI
+
+```bash
+# Initialize default config (after building)
+npm run build
+node dist/cli/index.js config init
+
+# Or set via environment variables
+export LLM_ENDPOINT=http://localhost:11434
+export LLM_MODEL=deepseek-coder:6.7b
+export LLM_PROVIDER=ollama
+```
+
+### 3. Run Your First Review
+
+**When running from source (after `npm run build`):**
+```bash
+# Review current branch against main
+node dist/cli/index.js review --base main
+
+# Compare two specific branches
+node dist/cli/index.js compare feature/new-feature main
+
+# Output to file
+node dist/cli/index.js compare feature/new-feature main --format json --output review.json
+```
+
+**When installed globally (after `npm link` or `npm install -g`):**
+```bash
+# Review current branch against main
+pr-review review --base main
+
+# Compare two specific branches
+pr-review compare feature/new-feature main
 ```
 
 ## Configuration
 
-Edit `.env` file:
+### Configuration File
 
-```bash
-# Model selection (7B recommended for 16GB RAM)
-MODEL_NAME=qwen2.5-coder:7b
+Create `pr-review.config.yml` in your project root:
 
-# Base branch for diffs
-BASE_BRANCH=main
+```yaml
+llm:
+  endpoint: "http://localhost:11434"
+  provider: "ollama"
+  model: "deepseek-coder:6.7b"
+  temperature: 0.2
+  timeout: 60000
+
+network:
+  allowedHosts:
+    - "localhost"
+    - "127.0.0.1"
+    - "::1"
+  strictMode: true
+
+review:
+  maxFiles: 50
+  maxLinesPerFile: 1000
+  excludePatterns:
+    - "*.lock"
+    - "node_modules/**"
+    - "dist/**"
+
+output:
+  defaultFormat: "text"
+  colorize: true
+  showDiff: false
 ```
 
-## System Requirements
+### Environment Variables
 
-| Component | Minimum | Recommended |
-|-----------|---------|-------------|
-| **RAM** | 16GB | 32GB |
-| **Storage** | 7GB free | 20GB free |
-| **CPU** | M3 | M3 Pro/Max |
-| **macOS** | 13.0+ | 14.0+ |
+All configuration can be overridden via environment variables:
 
-### Performance on M3 16GB
+- `LLM_ENDPOINT`: LLM server endpoint
+- `LLM_PROVIDER`: Provider type (ollama, vllm, llamacpp, openai-compatible)
+- `LLM_MODEL`: Model name
+- `LLM_TEMPERATURE`: Temperature (0-2)
+- `LLM_TIMEOUT`: Timeout in milliseconds
+- `LLM_API_KEY`: API key (if required)
+- `NETWORK_STRICT_MODE`: Enable strict network mode
 
-- **Review Speed**: 20-40 seconds per branch
-- **Memory Usage**: ~12GB peak
-- **Model Load Time**: ~5 seconds
-- **Disk Usage**: ~7GB total
+## CLI Commands
+
+### Compare Branches
+
+**When running from source:**
+```bash
+node dist/cli/index.js compare <source-branch> <target-branch> [options]
+```
+
+**When installed globally:**
+```bash
+pr-review compare <source-branch> <target-branch> [options]
+```
+
+**Options:**
+- `--repo-path <path>`: Repository path (default: cwd)
+- `--format <json|md|text>`: Output format (default: text)
+- `--output <file>`: Output file (default: stdout)
+- `--severity <all|high|critical>`: Filter by severity
+- `--max-files <number>`: Limit files to review
+- `--timeout <seconds>`: LLM timeout
+- `--verbose`: Verbose output
+- `--no-color`: Disable colors
+- `--exit-code`: Exit with code 1 if issues found
+
+### Review Current Branch
+
+**When running from source:**
+```bash
+node dist/cli/index.js review --base <branch> [options]
+```
+
+**When installed globally:**
+```bash
+pr-review review --base <branch> [options]
+```
+
+Review current branch against a base branch (default: main).
+
+### Configuration Management
+
+**When running from source:**
+```bash
+# Get configuration value
+node dist/cli/index.js config get llm.endpoint
+
+# List all configuration
+node dist/cli/index.js config list
+
+# Initialize default config file
+node dist/cli/index.js config init
+```
+
+**When installed globally:**
+```bash
+# Get configuration value
+pr-review config get llm.endpoint
+
+# List all configuration
+pr-review config list
+
+# Initialize default config file
+pr-review config init
+```
+
+## Docker Usage
+
+### Basic Docker Compose
+
+```bash
+# Start Ollama and PR Review CLI
+docker-compose -f docker/docker-compose.yml up
+
+# Run a review
+docker-compose -f docker/docker-compose.yml run pr-review \
+  compare feature/new-feature main \
+  --repo-path /repos/my-project \
+  --format json \
+  --output /output/review.json
+```
+
+### Offline Docker Setup
+
+For completely air-gapped environments:
+
+```bash
+# 1. Download models while online
+docker run -v ollama-data:/root/.ollama ollama/ollama pull deepseek-coder:6.7b
+
+# 2. Disconnect from internet
+
+# 3. Run offline
+docker-compose -f docker/docker-compose.offline.yml up
+```
+
+### Custom Docker Build
+
+```bash
+# Build image
+docker build -f docker/Dockerfile -t pr-review-cli .
+
+# Run
+docker run --rm \
+  -v $(pwd):/repos:ro \
+  -v $(pwd)/config:/config:ro \
+  -v $(pwd)/output:/output \
+  -e LLM_ENDPOINT=http://host.docker.internal:11434 \
+  pr-review-cli compare feature main
+```
+
+## CI/CD Integration
+
+### GitHub Actions
+
+```yaml
+name: Code Review
+
+on: [pull_request]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    services:
+      ollama:
+        image: ollama/ollama:latest
+        ports:
+          - 11434:11434
+        options: >-
+          --health-cmd "curl -f http://localhost:11434/api/tags || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install PR Review CLI
+        run: npm install -g pr-review-cli
+      
+      - name: Pull Ollama model
+        run: |
+          curl http://localhost:11434/api/pull -d '{"name": "deepseek-coder:1.3b"}'
+      
+      - name: Run code review
+        run: |
+          pr-review compare ${{ github.head_ref }} ${{ github.base_ref }} \
+            --format json \
+            --output review.json \
+            --exit-code
+        env:
+          LLM_ENDPOINT: http://localhost:11434
+          LLM_MODEL: deepseek-coder:1.3b
+      
+      - name: Upload review
+        uses: actions/upload-artifact@v3
+        with:
+          name: code-review
+          path: review.json
+```
+
+### GitLab CI
+
+```yaml
+code-review:
+  image: node:20
+  services:
+    - name: ollama/ollama:latest
+      alias: ollama
+  variables:
+    LLM_ENDPOINT: http://ollama:11434
+    LLM_MODEL: deepseek-coder:1.3b
+  before_script:
+    - npm install -g pr-review-cli
+    - |
+      until curl -f http://ollama:11434/api/tags; do
+        sleep 1
+      done
+    - curl http://ollama:11434/api/pull -d '{"name": "deepseek-coder:1.3b"}'
+  script:
+    - pr-review compare $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME $CI_MERGE_REQUEST_TARGET_BRANCH_NAME
+        --format json
+        --output review.json
+        --exit-code
+  artifacts:
+    paths:
+      - review.json
+```
+
+## LLM Provider Setup
+
+### Ollama
+
+**Installation:**
+```bash
+curl -fsSL https://ollama.com/install.sh | sh
+```
+
+**Available Models:**
+- `deepseek-coder:6.7b` (Recommended for code review)
+- `deepseek-coder:1.3b` (Faster, smaller)
+- `codellama:7b` (Alternative)
+- `llama3:8b` (General purpose)
+
+**Configuration:**
+```yaml
+llm:
+  endpoint: "http://localhost:11434"
+  provider: "ollama"
+  model: "deepseek-coder:6.7b"
+```
+
+### vLLM
+
+**Docker:**
+```bash
+docker run --gpus all -p 8000:8000 vllm/vllm-openai:latest \
+  --model deepseek-ai/deepseek-coder-6.7b-instruct
+```
+
+**Configuration:**
+```yaml
+llm:
+  endpoint: "http://localhost:8000"
+  provider: "vllm"
+  model: "deepseek-coder-6.7b-instruct"
+```
+
+### llama.cpp Server
+
+**Docker:**
+```bash
+docker run -p 8080:8080 ghcr.io/ggerganov/llama.cpp:server \
+  -m /models/deepseek-coder-6.7b-instruct-q4_k_m.gguf \
+  --host 0.0.0.0 --port 8080
+```
+
+**Configuration:**
+```yaml
+llm:
+  endpoint: "http://localhost:8080"
+  provider: "llamacpp"
+  model: "deepseek-coder-6.7b-instruct"
+```
+
+### OpenAI-Compatible (LM Studio, LocalAI, etc.)
+
+**Configuration:**
+```yaml
+llm:
+  endpoint: "http://localhost:1234/v1"
+  provider: "openai-compatible"
+  model: "deepseek-coder"
+  apiKey: ""  # Optional
+```
+
+## Security
+
+### Network Isolation
+
+The tool enforces strict network security:
+
+- ✅ Only allows connections to localhost (127.0.0.1, ::1)
+- ✅ Validates all endpoints before making requests
+- ✅ Blocks any attempt to connect to external hosts
+- ✅ Logs all connection attempts for audit
+
+### Data Privacy
+
+- ✅ All code analysis happens locally
+- ✅ No telemetry or analytics
+- ✅ No external API calls
+- ✅ All data remains on your machine
+
+### Docker Security
+
+- ✅ Runs as non-root user (UID 1001)
+- ✅ Minimal Alpine base image
+- ✅ Network isolation in docker-compose
+- ✅ No outbound connections
 
 ## Troubleshooting
 
-### "Cannot connect to Ollama"
+### LLM Provider Not Available
 
-```bash
-# Check if Ollama container is running
-docker-compose ps
+**Error:** `LLM provider is not available`
 
-# Start it manually
-docker-compose up -d ollama
+**Solution:**
+1. Ensure your LLM server is running:
+   ```bash
+   # For Ollama
+   ollama serve
+   
+   # Check health
+   curl http://localhost:11434/api/tags
+   ```
 
-# Check logs
-docker-compose logs ollama
+2. Verify endpoint in configuration:
+   ```bash
+   # When running from source
+   node dist/cli/index.js config get llm.endpoint
+   
+   # When installed globally
+   pr-review config get llm.endpoint
+   ```
+
+3. Check network connectivity:
+   ```bash
+   curl http://localhost:11434/api/tags
+   ```
+
+### Network Security Error
+
+**Error:** `SECURITY VIOLATION: Attempted to connect to non-local endpoint`
+
+**Solution:**
+- Ensure endpoint is localhost only
+- Check `network.allowedHosts` in config
+- Verify `NETWORK_STRICT_MODE` is not blocking valid localhost connections
+
+### Timeout Errors
+
+**Error:** `Request timeout after 60000ms`
+
+**Solution:**
+1. Increase timeout:
+   ```bash
+   # When running from source
+   node dist/cli/index.js compare feature main --timeout 120
+   
+   # When installed globally
+   pr-review compare feature main --timeout 120
+   ```
+
+2. Or in config:
+   ```yaml
+   llm:
+     timeout: 120000  # 2 minutes
+   ```
+
+### No Differences Found
+
+**Error:** `No differences found between branches`
+
+**Solution:**
+- Verify branch names are correct
+- Ensure branches have commits
+- Check if branches are identical
+
+## Architecture
+
 ```
-
-### "Model not found"
-
-The script will automatically pull the model if it's not found. If that fails:
-
-```bash
-# Pull model manually
-docker-compose exec ollama ollama pull qwen2.5-coder:7b
-
-# List available models
-docker-compose exec ollama ollama list
-```
-
-### "Not a git repository"
-
-Make sure you're running the review script from a git repository, or pass the repository path as an argument:
-
-```bash
-./scripts/review.sh /path/to/your/repo
-```
-
-### "Permission denied"
-
-```bash
-# Make scripts executable
-chmod +x scripts/*.sh
-```
-
-See [docs/# Troubleshooting Guide](docs/# Troubleshooting Guide) for more.
-
-## Documentation
-
-- [Security.md](docs/Security.md) - Security verification guide
-- [Troubleshooting Guide](docs/# Troubleshooting Guide) - Common issues
-
-## Updates
-
-```bash
-# Update to latest version
-git pull
-
-# Rebuild everything after code changes
-./scripts/rebuild.sh
-
-# Or rebuild just containers
-docker-compose build
-
-# Update model
-docker-compose exec ollama ollama pull qwen2.5-coder:7b
+pr-review-cli/
+├── src/
+│   ├── cli/              # CLI interface
+│   ├── core/
+│   │   ├── git/         # Git operations
+│   │   ├── llm/         # LLM providers
+│   │   ├── review/      # Review engine
+│   │   └── storage/      # Configuration
+│   ├── formatters/      # Output formatters
+│   ├── types/           # Type definitions
+│   └── utils/           # Utilities
+├── tests/               # Test suite
+├── docker/              # Docker configuration
+└── config/              # Default configuration
 ```
 
 ## Development
 
-### Running Tests
+### Setup
 
 ```bash
-# Run TypeScript compilation check
+# Clone repository
+git clone https://github.com/your-org/pr-review-cli.git
+cd pr-review-cli
+
+# Install dependencies
+npm install
+
+# Install dependencies
+npm install
+
+# Build
+npm run build
+
+# Run tests
 npm test
 
-# Or use the CI test script
-npm run test:ci
+# Lint
+npm run lint
+
+# Run the CLI (after building)
+node dist/cli/index.js --help
 ```
 
-### Rebuilding After Changes
-
-When you make changes to the code, rebuild the project:
+### Testing
 
 ```bash
-# Manual rebuild (TypeScript + Docker)
-./scripts/rebuild.sh
+# Unit tests
+npm run test:unit
 
-# Auto-rebuild on file changes (requires fswatch)
-./scripts/watch.sh
+# Integration tests
+npm run test:integration
+
+# E2E tests
+npm run test:e2e
+
+# Coverage
+npm run test:coverage
 ```
-
-The `watch.sh` script will:
-- Watch for changes in source files
-- Automatically rebuild TypeScript
-- Automatically rebuild Docker image
-- Install fswatch if needed: `brew install fswatch`
-
-### GitHub Actions
-
-The project includes GitHub Actions workflows:
-
-**Test Workflow** (`.github/workflows/test.yml`):
-- Runs on every push and PR
-- Tests TypeScript compilation
-- Verifies build output files
-- Checks shell script syntax
-- Builds and verifies Docker image
-
-**Dependency Check** (`.github/workflows/changelog.yml`):
-- Runs weekly (Sundays) or manually
-- Checks for outdated npm dependencies
-- Audits for security vulnerabilities
-- Results posted as workflow summary
-
-**Note:** README and version information are manually maintained. Version comes from `package.json` (single source of truth).
 
 ## Contributing
 
-PRs welcome! This tool reviews code—it should be well-reviewed itself.
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-All contributions are tested automatically via GitHub Actions.
+### Commit Message Format
+
+Follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+- `feat:` New features
+- `fix:` Bug fixes
+- `docs:` Documentation
+- `test:` Testing
+- `refactor:` Code refactoring
+- `security:` Security improvements
 
 ## License
 
-MIT License
+MIT License - see LICENSE file for details
+
+## Support
+
+- 📖 [Documentation](https://github.com/your-org/pr-review-cli/wiki)
+- 🐛 [Issue Tracker](https://github.com/your-org/pr-review-cli/issues)
+- 💬 [Discussions](https://github.com/your-org/pr-review-cli/discussions)
 
 ## Acknowledgments
 
-- **Qwen Team** - For the excellent Qwen2.5-Coder models
-- **Ollama** - For making local LLMs accessible
-
-## Why This Exists
-
-Most PR review tools send your code to external APIs. For proprietary or sensitive codebases, that's a non-starter. This tool keeps everything local while still providing AI-powered insights.
+- Built with TypeScript and Node.js
+- Uses [Ollama](https://ollama.com/), [vLLM](https://github.com/vllm-project/vllm), and [llama.cpp](https://github.com/ggerganov/llama.cpp) for LLM inference
+- Inspired by offline-first development practices
