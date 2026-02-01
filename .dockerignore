@@ -1,0 +1,16 @@
+node_modules
+dist
+coverage
+tests
+.git
+.github
+*.md
+.env
+*.log
+.DS_Store
+.vscode
+.idea
+tsconfig.json
+.eslintrc.json
+.prettierrc
+vitest.config.ts

@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: pr-review-ollama
+    volumes:
+      - ollama-data:/root/.ollama
+    ports:
+      - "11434:11434"
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    networks:
+      - pr-review-network
+    # SECURITY: No external network access
+    network_mode: bridge
+    # Pull model on startup
+    command: >
+      sh -c "ollama serve & 
+             sleep 5 && 
+             ollama pull deepseek-coder:6.7b &&
+             wait"
+
+  pr-review:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: pr-review-cli
+    depends_on:
+      - ollama
+    volumes:
+      - ./repos:/repos:ro           # Mount repos as read-only
+      - ./config:/config:ro          # Mount config
+      - ./output:/output             # Output directory
+    environment:
+      - LLM_ENDPOINT=http://ollama:11434
+      - LLM_MODEL=deepseek-coder:6.7b
+      - CONFIG_PATH=/config/config.yml
+      # SECURITY: Enforce strict network mode
+      - NETWORK_STRICT_MODE=true
+    networks:
+      - pr-review-network
+    # SECURITY: No external network access, only internal bridge network
+    dns: []  # Disable DNS resolution
+    network_mode: bridge
+    # Prevent outbound connections
+    cap_drop:
+      - NET_RAW
+      - NET_ADMIN
+    command: >
+      compare feature/new-feature main
+      --repo-path /repos/my-project
+      --format json
+      --output /output/review.json
+
+# SECURITY: Internal network only, no external gateway
+networks:
+  pr-review-network:
+    driver: bridge
+    internal: true  # CRITICAL: No external connectivity
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+volumes:
+  ollama-data:
+    driver: local

@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  # Option 1: vLLM (alternative to Ollama)
+  vllm:
+    image: vllm/vllm-openai:latest
+    container_name: pr-review-vllm
+    volumes:
+      - ./models:/models:ro  # Pre-downloaded models
+    ports:
+      - "8000:8000"
+    networks:
+      - pr-review-network
+    command: >
+      --model /models/deepseek-coder-6.7b-instruct
+      --host 0.0.0.0
+      --port 8000
+    environment:
+      - VLLM_ALLOW_RUNTIME_LORA=false
+      - VLLM_WORKER_MULTIPROC_METHOD=spawn
+
+  # Option 2: llama.cpp server (alternative)
+  llamacpp:
+    image: ghcr.io/ggerganov/llama.cpp:server
+    container_name: pr-review-llamacpp
+    volumes:
+      - ./models:/models:ro
+    ports:
+      - "8080:8080"
+    networks:
+      - pr-review-network
+    command: >
+      -m /models/deepseek-coder-6.7b-instruct-q4_k_m.gguf
+      --host 0.0.0.0
+      --port 8080
+      -c 4096
+
+  pr-review:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: pr-review-cli
+    depends_on:
+      - vllm  # or llamacpp
+    volumes:
+      - ./repos:/repos:ro
+      - ./config:/config:ro
+      - ./output:/output
+    environment:
+      # Switch between providers
+      - LLM_PROVIDER=vllm  # or llamacpp, or ollama
+      - LLM_ENDPOINT=http://vllm:8000  # or http://llamacpp:8080
+      - LLM_MODEL=deepseek-coder-6.7b-instruct
+      - CONFIG_PATH=/config/config.yml
+    networks:
+      - pr-review-network
+    network_mode: bridge
+    dns: []
+    cap_drop:
+      - NET_RAW
+      - NET_ADMIN
+
+networks:
+  pr-review-network:
+    driver: bridge
+    internal: true  # No internet access
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
