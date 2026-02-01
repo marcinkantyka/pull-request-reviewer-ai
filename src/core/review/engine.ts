@@ -159,6 +159,7 @@ export class ReviewEngine {
           );
           // Create empty reviews for failed group
           const groupIndex = batchResults.indexOf(result);
+          // eslint-disable-next-line security/detect-object-injection
           const group = batch[groupIndex];
           if (group) {
             for (const file of group.files) {
@@ -204,6 +205,11 @@ export class ReviewEngine {
   private async reviewGroupWithContext(
     group: FileGroup
   ): Promise<FileReview[] | null> {
+    // Type guard: ensure groupType is not 'isolated'
+    if (group.groupType === 'isolated') {
+      return null;
+    }
+
     try {
       logger.debug(
         {
@@ -216,7 +222,7 @@ export class ReviewEngine {
 
       const issuesByFile = await this.analyzer.analyzeFileGroup(
         group.files,
-        group.groupType,
+        group.groupType, // TypeScript now knows this is 'directory' | 'feature'
         group.context
       );
 
@@ -256,6 +262,7 @@ export class ReviewEngine {
       }
 
       // Return empty review for failed file
+      // eslint-disable-next-line security/detect-object-injection
       const file = files[index];
       logger.warn({ filePath: file.filePath }, 'Failed to review file individually');
       return {
@@ -268,42 +275,6 @@ export class ReviewEngine {
     });
   }
 
-  /**
-   * Review multiple files with concurrency control (legacy method, kept for fallback)
-   */
-  private async reviewFiles(diffs: DiffInfo[]): Promise<FileReview[]> {
-    const concurrency = this.config.review.concurrency ?? 3;
-    const results: FileReview[] = [];
-
-    for (let i = 0; i < diffs.length; i += concurrency) {
-      const batch = diffs.slice(i, i + concurrency);
-      const batchResults = await Promise.allSettled(
-        batch.map((diff) => this.reviewSingleFile(diff))
-      );
-
-      for (const result of batchResults) {
-        if (result.status === 'fulfilled') {
-          results.push(result.value);
-        } else {
-          logger.error(
-            { error: result.reason },
-            'Failed to review file'
-          );
-          // Create empty review for failed file
-          const diff = batch[batchResults.indexOf(result)];
-          results.push({
-            path: diff.filePath,
-            language: diff.language,
-            additions: diff.additions,
-            deletions: diff.deletions,
-            issues: [],
-          });
-        }
-      }
-    }
-
-    return results;
-  }
 
   /**
    * Review a single file
