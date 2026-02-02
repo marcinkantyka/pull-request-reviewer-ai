@@ -1,0 +1,44 @@
+# Source files (only dist is needed)
+src/
+tests/
+*.ts
+!*.d.ts
+
+# Build and development files
+tsconfig.json
+tsup.config.ts
+vitest.config.ts
+eslint.config.js
+*.config.js
+*.config.ts
+
+# Development dependencies and tools
+node_modules/
+coverage/
+.vscode/
+.idea/
+
+# Documentation (optional - remove if you want to include in npm package)
+*.md
+!README.md
+
+# CI/CD and development files
+.github/
+docker/
+examples/
+config/
+
+# Logs and temporary files
+*.log
+*.swp
+*.swo
+*~
+.DS_Store
+.env
+.env.local
+.cache/
+*.tsbuildinfo
+
+# Output directories
+dist/tests/
+dist/**/*.map

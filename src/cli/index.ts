@@ -16,34 +16,22 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 /**
- * Safely read version from package.json
- * Validates file existence and JSON structure before parsing
+ * Reads and validates version from package.json
+ * Returns default version if file is missing or invalid
  */
-function getVersion(): string {
+function readPackageVersion(): string {
   const defaultVersion = '1.0.0';
+  const packagePath = resolve(__dirname, '../../package.json');
   
   try {
-    // Resolve path relative to current file location
-    const packagePath = resolve(__dirname, '../../package.json');
-    
-    // Validate file exists before reading
     if (!existsSync(packagePath)) {
       logger.warn({ packagePath }, 'package.json not found, using default version');
       return defaultVersion;
     }
     
-    // Read and parse with validation
-    const packageContent = readFileSync(packagePath, 'utf-8');
-    const packageJson = JSON.parse(packageContent);
+    const packageJson = JSON.parse(readFileSync(packagePath, 'utf-8'));
+    const version = packageJson?.version;
     
-    // Validate structure
-    if (typeof packageJson !== 'object' || packageJson === null) {
-      logger.warn('Invalid package.json structure, using default version');
-      return defaultVersion;
-    }
-    
-    // Extract version with validation
-    const version = packageJson.version;
     if (typeof version === 'string' && version.length > 0) {
       return version;
     }
@@ -59,7 +47,7 @@ function getVersion(): string {
   }
 }
 
-const version = getVersion();
+const version = readPackageVersion();
 
 const program = new Command();
 
