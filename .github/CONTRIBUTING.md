@@ -144,16 +144,21 @@ docs: update installation instructions
 pr-reviewer/
 ├── src/
 │   ├── cli/          # CLI commands and entry point
+│   │   └── commands/ # Individual command implementations
 │   ├── core/         # Core functionality
-│   │   ├── git/      # Git operations
+│   │   ├── git/      # Git operations and diff parsing
 │   │   ├── llm/      # LLM client and providers
-│   │   └── review/   # Review engine
-│   ├── formatters/   # Output formatters
+│   │   ├── review/   # Review engine and analysis
+│   │   └── storage/  # Configuration storage and loading
+│   ├── formatters/   # Output formatters (JSON, Markdown, Terminal)
 │   ├── types/        # TypeScript type definitions
-│   └── utils/        # Utility functions
+│   └── utils/        # Utility functions (logger, validator, errors)
 ├── tests/            # Test files
-├── config/           # Configuration files
-└── examples/         # Usage examples
+│   ├── unit/         # Unit tests
+│   └── integration/  # Integration tests
+├── config/           # Default configuration files
+├── docker/           # Docker configuration and compose files
+└── examples/         # Usage examples and scripts
 ```
 
 ## Testing

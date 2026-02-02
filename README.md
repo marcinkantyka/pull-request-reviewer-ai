@@ -141,33 +141,79 @@ Create a `pr-review.config.yml` file in your project root:
 
 ```yaml
 llm:
-  endpoint: 'http://localhost:11434'
-  provider: 'ollama'
+  endpoint: 'http://localhost:11434'  # Ollama default
+  provider: 'ollama'                   # Options: ollama, vllm, llamacpp, openai-compatible
   model: 'deepseek-coder:6.7b'
   temperature: 0.2
-  timeout: 60000
+  timeout: 60000                        # Milliseconds
+  maxTokens: 2048
+  apiKey: ''                           # Optional, for secured endpoints
+  streaming: false
+  retries: 3
+  retryDelay: 1000
+
+network:
+  allowedHosts:
+    - 'localhost'
+    - '127.0.0.1'
+    - '::1'
+  strictMode: true                     # Block non-localhost connections
+  dnsBlockList: ['*']                  # Block external DNS
 
 review:
   maxFiles: 50
   maxLinesPerFile: 1000
-  contextAware: true # Groups related files for better context
   excludePatterns:
     - '*.lock'
+    - '*.min.js'
+    - '*.min.css'
     - 'node_modules/**'
     - 'dist/**'
+    - 'build/**'
+    - '.git/**'
+  
+  # Context-aware review options
+  contextAware: true                   # Enable multi-file context review
+  groupByDirectory: true               # Group files in same directory
+  groupByFeature: true                 # Group files by feature/module
+  maxGroupSize: 5                      # Maximum files per group
+  directoryDepth: 2                    # Directory levels for grouping
+  concurrency: 3                       # Parallel review groups
+
+output:
+  defaultFormat: 'text'
+  colorize: true
+  showDiff: false
+  groupByFile: true
+
+git:
+  diffContext: 3
+  maxDiffSize: 10485760                # 10MB
 ```
 
-Or use environment variables:
+### Environment Variables
+
+You can also use environment variables instead of a config file:
 
 ```bash
 export LLM_ENDPOINT=http://localhost:11434
 export LLM_MODEL=deepseek-coder:6.7b
 export LLM_PROVIDER=ollama
+export LLM_API_KEY=your-key-here       # Optional
+export LLM_TIMEOUT=60000
 ```
 
-Run `pr-review config init` to generate a default config file.
+Run `pr-review config init` to generate a default config file with all available options.
 
 ## Commands
+
+Get help for any command:
+```bash
+pr-review --help              # Show general help
+pr-review review --help       # Show help for review command
+pr-review compare --help      # Show help for compare command
+pr-review config --help       # Show help for config command
+```
 
 ### `review`
 
@@ -192,20 +238,37 @@ pr-review compare feature-branch main --severity high --max-files 20
 Manage configuration:
 
 ```bash
-pr-review config init          # Create default config file
-pr-review config get llm.endpoint
-pr-review config list
+pr-review config init                    # Create default config file
+pr-review config init --output custom.yml # Create config with custom name
+pr-review config get llm.endpoint        # Get specific config value
+pr-review config list                    # List all configuration
 ```
 
 ## Options
 
+Common options available for both `review` and `compare` commands:
+
+- `--repo-path <path>` - Repository path (default: current working directory)
 - `--format <json|md|text>` - Output format (default: text)
 - `--output <file>` - Save to file instead of stdout
-- `--severity <all|high|critical>` - Filter by severity level
+- `--config <file>` - Path to custom config file
+- `--severity <all|high|critical>` - Filter by severity level (default: all)
+- `--files <pattern>` - File pattern to review (glob pattern)
 - `--max-files <number>` - Limit number of files to review
-- `--timeout <seconds>` - LLM timeout (default: 60)
+- `--timeout <seconds>` - LLM timeout in seconds (default: 60)
 - `--verbose` - Show detailed logs
+- `--no-color` - Disable colored output
 - `--exit-code` - Exit with code 1 if issues found (useful for CI)
+
+### Review Command Options
+
+- `--base <branch>` - Base branch to compare against (default: main)
+
+### Compare Command
+
+Takes two required arguments:
+- `<source-branch>` - Source branch to review
+- `<target-branch>` - Target branch to compare against
 
 ## LLM providers
 
@@ -237,33 +300,59 @@ See `docker/docker-compose.yml` for a complete setup with Ollama.
 
 ### GitHub Actions
 
+See `examples/ci-integration.yml` for a complete example. Here's a basic setup:
+
 ```yaml
 name: Code Review
 
-on: [pull_request]
+on:
+  pull_request:
+    branches: [main, develop]
 
 jobs:
   review:
     runs-on: ubuntu-latest
+    
     services:
       ollama:
         image: ollama/ollama:latest
         ports:
           - 11434:11434
+        options: >-
+          --health-cmd "curl -f http://localhost:11434/api/tags || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # Full history for git operations
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
 
-      - run: npm install -g pull-request-reviewer-ai
-      - run: |
+      - name: Install PR Review CLI
+        run: npm install -g pull-request-reviewer-ai
+
+      - name: Wait for Ollama
+        run: |
+          until curl -f http://localhost:11434/api/tags; do
+            echo "Waiting for Ollama..."
+            sleep 2
+          done
+
+      - name: Pull Ollama model
+        run: |
           curl http://localhost:11434/api/pull -d '{"name": "deepseek-coder:1.3b"}'
-      - run: |
+        timeout-minutes: 10
+
+      - name: Run code review
+        run: |
           pr-review compare ${{ github.head_ref }} ${{ github.base_ref }} \
             --format json \
             --output review.json \
@@ -271,12 +360,18 @@ jobs:
         env:
           LLM_ENDPOINT: http://localhost:11434
           LLM_MODEL: deepseek-coder:1.3b
+          LLM_PROVIDER: ollama
+        continue-on-error: true
 
-      - uses: actions/upload-artifact@v3
+      - name: Upload review as artifact
+        uses: actions/upload-artifact@v3
+        if: always()
         with:
           name: code-review
           path: review.json
 ```
+
+For a more complete example with PR comments, see `examples/ci-integration.yml`.
 
 ## Security
 
@@ -302,11 +397,17 @@ Increase the timeout:
 pr-review compare feature main --timeout 120
 ```
 
-Or in config:
+Or in config (timeout is in milliseconds):
 
 ```yaml
 llm:
-  timeout: 120000 # 2 minutes
+  timeout: 120000  # 2 minutes (120 seconds)
+```
+
+Or via CLI:
+
+```bash
+pr-review compare feature main --timeout 120  # 120 seconds
 ```
 
 **Network security errors**

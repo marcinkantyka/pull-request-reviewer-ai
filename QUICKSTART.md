@@ -49,13 +49,19 @@ That's it! The tool will analyze your changes and show the results.
 The tool works with defaults, but you can customize it:
 
 ```bash
-# Create a config file
+# Create a config file (if using npm link or global install)
+pr-review config init
+
+# Or if running from source
 node dist/cli/index.js config init
 
 # Or use environment variables
 export LLM_ENDPOINT=http://localhost:11434
 export LLM_MODEL=deepseek-coder:6.7b
+export LLM_PROVIDER=ollama
 ```
+
+This creates a `pr-review.config.yml` file with all available configuration options. See [README.md](README.md) for full configuration details.
 
 ## Troubleshooting
 
