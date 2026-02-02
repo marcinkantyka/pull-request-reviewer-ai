@@ -34,7 +34,7 @@ jobs:
           cache: 'npm'
 
       - name: Install PR Review CLI
-        run: npm install -g pr-review-cli
+        run: npm install -g pull-request-reviewer-ai
 
       - name: Wait for Ollama
         run: |

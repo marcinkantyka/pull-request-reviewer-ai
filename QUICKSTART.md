@@ -13,8 +13,8 @@ Get up and running in a few minutes.
 ### 1. Install and build
 
 ```bash
-git clone https://github.com/marcinkantyka/pr-review-cli.git
-cd pr-review-cli
+git clone https://github.com/marcinkantyka/pull-request-reviewer-ai.git
+cd pull-request-reviewer-ai
 npm install
 npm run build
 ```

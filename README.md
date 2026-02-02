@@ -1,7 +1,7 @@
 # PR Review CLI
 
-[![CI](https://github.com/marcinkantyka/pr-review-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/marcinkantyka/pr-review-cli/actions/workflows/ci.yml)
-[![Release](https://github.com/marcinkantyka/pr-review-cli/actions/workflows/release.yml/badge.svg)](https://github.com/marcinkantyka/pr-review-cli/actions/workflows/release.yml)
+[![CI](https://github.com/marcinkantyka/pull-request-reviewer-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/marcinkantyka/pull-request-reviewer-ai/actions/workflows/ci.yml)
+[![Release](https://github.com/marcinkantyka/pull-request-reviewer-ai/actions/workflows/release.yml/badge.svg)](https://github.com/marcinkantyka/pull-request-reviewer-ai/actions/workflows/release.yml)
 
 A CLI tool that uses local LLMs to review your code changes. Everything runs offline on your machine—no data leaves your computer.
 
@@ -14,14 +14,14 @@ Reviews code changes between git branches using a local LLM. It analyzes diffs, 
 ### From npm
 
 ```bash
-npm install -g pr-review-cli
+npm install -g pull-request-reviewer-ai
 ```
 
 ### From source
 
 ```bash
-git clone https://github.com/marcinkantyka/pr-review-cli.git
-cd pr-review-cli
+git clone https://github.com/marcinkantyka/pull-request-reviewer-ai.git
+cd pull-request-reviewer-ai
 npm install
 npm run build
 ```
@@ -56,6 +56,68 @@ pr-review compare feature-branch main --format json --output review.json
 ```
 
 That's it. The tool will connect to your local LLM (default: `http://localhost:11434`) and analyze the changes.
+
+## Example Output
+
+Here's what a typical review looks like:
+
+```
+════════════════════════════════════════════════════════════════════════════════
+  Code Review Report
+════════════════════════════════════════════════════════════════════════════════
+
+  Generated:     2026-02-01T23:17:28.119Z
+  Source Branch: fix/repo_rename
+  Target Branch: main
+  Model:         qwen2.5-coder:7b
+  Duration:      30349ms
+
+  Summary
+  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─
+  Files Reviewed: 8
+  Total Issues:   4
+
+  Issues by Severity:
+    Medium: 1
+    Info: 3
+
+  Score: 9.3/10
+
+  Issues by File
+  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─
+
+  📄 .github/workflows/ci.yml (yaml) +3 -3
+
+    ℹ️ INFO [maintainability]:88
+       The Docker image name has been changed to 'pull-request-reviewer-ai:test' but the associated GitHub Secrets should also be updated for consistency.
+       💡 Update ${ secrets.DOCKER_USERNAME } in .github/workflows/release.yml to match the new image name.
+
+  📄 QUICKSTART.md (markdown) +2 -2
+
+    ℹ️ INFO [style]:14
+       The URL has been changed from 'pr-review-cli' to 'pull-request-reviewer-ai'. Ensure this change is intentional and that the repository name and description are updated accordingly.
+       💡 Verify that the new repository name and description are accurate and update them if necessary.
+
+  📄 examples/ci-integration.yml (yaml) +1 -1
+
+    ℹ️ INFO [maintainability]:35
+       The tool name has changed from 'pr-review-cli' to 'pull-request-reviewer-ai'. Ensure that the new tool is compatible with the existing workflow.
+       💡 Verify compatibility and update any documentation if necessary.
+
+  📄 src/cli/index.ts (typescript) +17 -1
+
+    🟡 MEDIUM [maintainability]:17
+       The version is hardcoded and falls back to '1.0.0' if the package.json cannot be read.
+       💡 Consider using a default value or log an error message when the version cannot be determined.
+
+════════════════════════════════════════════════════════════════════════════════
+```
+
+The report includes:
+
+- **Summary**: Overview of files reviewed, total issues, and score
+- **Issues by Severity**: Breakdown of critical, high, medium, low, and info issues
+- **Issues by File**: Detailed findings for each file with line numbers, severity, category, and suggestions
 
 ## Configuration
 
@@ -144,13 +206,13 @@ Set the `provider` and `endpoint` in your config or via environment variables.
 
 ```bash
 # Build
-docker build -f docker/Dockerfile -t pr-review-cli .
+docker build -f docker/Dockerfile -t pull-request-reviewer-ai .
 
 # Run
 docker run --rm \
   -v $(pwd):/repos:ro \
   -e LLM_ENDPOINT=http://host.docker.internal:11434 \
-  pr-review-cli compare feature main
+  pull-request-reviewer-ai compare feature main
 ```
 
 See `docker/docker-compose.yml` for a complete setup with Ollama.
@@ -182,7 +244,7 @@ jobs:
         with:
           node-version: '20'
 
-      - run: npm install -g pr-review-cli
+      - run: npm install -g pull-request-reviewer-ai
       - run: |
           curl http://localhost:11434/api/pull -d '{"name": "deepseek-coder:1.3b"}'
       - run: |
