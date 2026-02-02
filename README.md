@@ -114,6 +114,7 @@ Here's what a typical review looks like:
 ```
 
 The report includes:
+
 - **Summary**: Overview of files reviewed, total issues, and score
 - **Issues by Severity**: Breakdown of critical, high, medium, low, and info issues
 - **Issues by File**: Detailed findings for each file with line numbers, severity, category, and suggestions

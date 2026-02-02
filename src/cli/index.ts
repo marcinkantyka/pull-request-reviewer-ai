@@ -22,20 +22,20 @@ const __dirname = dirname(__filename);
 function readPackageVersion(): string {
   const defaultVersion = '1.0.0';
   const packagePath = resolve(__dirname, '../../package.json');
-  
+
   try {
     if (!existsSync(packagePath)) {
       logger.warn({ packagePath }, 'package.json not found, using default version');
       return defaultVersion;
     }
-    
+
     const packageJson = JSON.parse(readFileSync(packagePath, 'utf-8'));
     const version = packageJson?.version;
-    
+
     if (typeof version === 'string' && version.length > 0) {
       return version;
     }
-    
+
     logger.warn('Version not found in package.json, using default version');
     return defaultVersion;
   } catch (error) {
