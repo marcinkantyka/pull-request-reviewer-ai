@@ -42,7 +42,7 @@ pr-review review --base main
 node dist/cli/index.js review --base main
 ```
 
-That's it! The tool will analyze your changes and show the results.
+That's all you need. The tool will analyze your changes and show you the results.
 
 ## Configuration (optional)
 
@@ -65,18 +65,18 @@ This creates a `pr-review.config.yml` file with all available configuration opti
 
 ## Troubleshooting
 
-**"LLM provider is not available"**
+**LLM provider is not available**
 
-Make sure Ollama is running:
+If you see this error, make sure Ollama is actually running:
 
 ```bash
 ollama serve
 curl http://localhost:11434/api/tags
 ```
 
-**"Command not found: pr-review"**
+**Command not found: pr-review**
 
-Use `node dist/cli/index.js` instead, or run `npm link` to install globally.
+If the command isn't found, use `node dist/cli/index.js` instead, or run `npm link` to install it globally.
 
 ## Next steps
 

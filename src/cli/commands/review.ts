@@ -33,7 +33,6 @@ export function createReviewCommand(): Command {
     .option('--exit-code', 'Exit with code 1 if issues found')
     .action(async (options: CLIOptions & { base?: string }) => {
       try {
-        // Set log level
         if (options.verbose) {
           logger.level = 'debug';
         }
@@ -41,10 +40,8 @@ export function createReviewCommand(): Command {
         const baseBranch = options.base || 'main';
         validateBranchName(baseBranch);
 
-        // Load configuration
         const config = await loadConfig(options.config);
 
-        // Override config with CLI options
         if (options.timeout) {
           config.llm.timeout =
             (typeof options.timeout === 'string'
@@ -55,15 +52,12 @@ export function createReviewCommand(): Command {
           config.review.maxFiles = options.maxFiles;
         }
 
-        // Initialize git repository
         const repoPath = options.repoPath || process.cwd();
         const gitRepo = new GitRepositoryManager(repoPath);
 
-        // Get current branch
         const repoInfo = await gitRepo.getRepositoryInfo();
         const currentBranch = repoInfo.currentBranch;
 
-        // Get diff
         logger.info({ currentBranch, baseBranch }, 'Getting diff between branches');
         const diffs = await gitRepo.getBranchDiff(baseBranch, config.git.maxDiffSize);
 
@@ -72,10 +66,8 @@ export function createReviewCommand(): Command {
           process.exit(0);
         }
 
-        // Initialize review engine
         const engine = new ReviewEngine(config);
 
-        // Health check
         logger.info('Checking LLM health...');
         const isHealthy = await engine.healthCheck();
         if (!isHealthy) {
@@ -85,10 +77,8 @@ export function createReviewCommand(): Command {
           );
         }
 
-        // Run review
         const result = await engine.review(diffs, currentBranch, baseBranch);
 
-        // Filter by severity if requested
         if (options.severity !== 'all') {
           const minSeverity = options.severity === 'critical' ? 'critical' : 'high';
           const severityOrder = ['critical', 'high', 'medium', 'low', 'info'];
@@ -101,7 +91,6 @@ export function createReviewCommand(): Command {
             ),
           }));
 
-          // Recalculate summary
           const allIssues = result.files.flatMap((f) => f.issues);
           result.summary = {
             ...result.summary,
@@ -114,7 +103,6 @@ export function createReviewCommand(): Command {
           };
         }
 
-        // Format output
         const format = (options.format || config.output.defaultFormat) as 'text' | 'json' | 'md';
         let output: string;
 
@@ -133,7 +121,6 @@ export function createReviewCommand(): Command {
             );
         }
 
-        // Write output
         if (options.output) {
           const outputPath = path.resolve(options.output);
           // eslint-disable-next-line security/detect-non-literal-fs-filename
@@ -143,7 +130,6 @@ export function createReviewCommand(): Command {
           console.log(output);
         }
 
-        // Exit code
         if (options.exitCode && result.summary.totalIssues > 0) {
           process.exit(1);
         }

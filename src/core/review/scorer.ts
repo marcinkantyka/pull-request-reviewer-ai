@@ -24,14 +24,11 @@ export function calculateScore(issues: Issue[]): number {
     return MAX_SCORE;
   }
 
-  // Calculate weighted penalty
   const totalPenalty = issues.reduce((sum, issue) => {
     return sum + SEVERITY_WEIGHTS[issue.severity];
   }, 0);
 
-  // Normalize to 0-10 scale
-  // More issues = lower score
-  const penaltyFactor = Math.min(totalPenalty / 100, 1); // Cap at 1.0
+  const penaltyFactor = Math.min(totalPenalty / 100, 1);
   const score = MAX_SCORE * (1 - penaltyFactor);
 
   return Math.max(0, Math.round(score * 10) / 10);

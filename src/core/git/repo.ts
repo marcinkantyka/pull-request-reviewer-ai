@@ -67,7 +67,6 @@ export class GitRepositoryManager {
     try {
       logger.info({ sourceBranch, targetBranch }, 'Getting diff between branches');
 
-      // Check if branches exist
       const [sourceExists, targetExists] = await Promise.all([
         this.branchExists(sourceBranch),
         this.branchExists(targetBranch),
@@ -80,17 +79,14 @@ export class GitRepositoryManager {
         throw new GitError(`Target branch does not exist: ${targetBranch}`);
       }
 
-      // Get diff output
       const diffOutput = await this.git.diff([targetBranch, sourceBranch, '--']);
 
       if (diffOutput.length > maxDiffSize) {
         throw new GitError(`Diff size (${diffOutput.length}) exceeds maximum (${maxDiffSize})`);
       }
 
-      // Parse diff
       const diffs = parseDiff(diffOutput);
 
-      // Convert to DiffInfo format
       const diffInfos: DiffInfo[] = diffs
         .filter((diff) => !diff.binary && diff.filePath)
         .map((diff) => {

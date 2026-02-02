@@ -30,7 +30,6 @@ export function groupFiles(diffs: DiffInfo[], options: GroupingOptions): FileGro
   }
 
   if (!options.enabled) {
-    // Return each file as isolated group
     return diffs.map((diff) => ({
       files: [diff],
       groupType: 'isolated' as const,
@@ -45,18 +44,15 @@ export function groupFiles(diffs: DiffInfo[], options: GroupingOptions): FileGro
       continue;
     }
 
-    // Find related files
     const relatedFiles = findRelatedFiles(diff, diffs, options, processed);
 
     if (relatedFiles.length === 1) {
-      // Isolated file
       groups.push({
         files: [diff],
         groupType: 'isolated',
       });
       processed.add(diff.filePath);
     } else {
-      // Group of related files
       const groupType = determineGroupType(relatedFiles, options);
       const context = getGroupContext(relatedFiles, groupType);
 
@@ -66,7 +62,6 @@ export function groupFiles(diffs: DiffInfo[], options: GroupingOptions): FileGro
         context,
       });
 
-      // Mark all files in group as processed
       for (const file of relatedFiles) {
         processed.add(file.filePath);
       }
@@ -115,7 +110,6 @@ function findRelatedFiles(
 
     let isRelated = false;
 
-    // Group by directory
     if (options.groupByDirectory) {
       const otherDir = getDirectoryPath(other.filePath, options.directoryDepth);
       if (fileDir === otherDir && fileDir !== '') {
@@ -123,7 +117,6 @@ function findRelatedFiles(
       }
     }
 
-    // Group by feature (deeper directory structure)
     if (options.groupByFeature && !isRelated) {
       const fileFeature = getFeaturePath(file.filePath);
       const otherFeature = getFeaturePath(other.filePath);
@@ -153,8 +146,7 @@ function getDirectoryPath(filePath: string, depth: number): string {
     return '';
   }
 
-  // Return directory path up to depth
-  const dirParts = parts.slice(0, -1); // Remove filename
+  const dirParts = parts.slice(0, -1);
   if (dirParts.length <= depth) {
     return dirParts.join('/');
   }
@@ -168,17 +160,14 @@ function getDirectoryPath(filePath: string, depth: number): string {
 function getFeaturePath(filePath: string): string {
   const parts = filePath.split('/');
 
-  // Look for common feature/module patterns
   const featureIndex = parts.findIndex(
     (p) => p === 'features' || p === 'modules' || p === 'components'
   );
 
   if (featureIndex !== -1 && featureIndex < parts.length - 2) {
-    // Return path including feature name
     return parts.slice(0, featureIndex + 2).join('/');
   }
 
-  // Fallback: use directory structure
   if (parts.length >= 3) {
     return parts.slice(0, -1).join('/');
   }
@@ -197,7 +186,6 @@ function determineGroupType(
     return 'isolated';
   }
 
-  // Check if files share a feature path
   if (options.groupByFeature) {
     const featurePaths = files.map((f) => getFeaturePath(f.filePath));
     const uniqueFeatures = new Set(featurePaths.filter((p) => p !== ''));
@@ -206,7 +194,6 @@ function determineGroupType(
     }
   }
 
-  // Default to directory grouping
   return 'directory';
 }
 

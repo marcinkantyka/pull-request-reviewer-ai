@@ -28,15 +28,11 @@ export function validateEndpoint(endpoint: string, allowedHosts: string[]): void
 
   let hostname = url.hostname.toLowerCase();
 
-  // Strip brackets from IPv6 addresses (e.g., [::1] -> ::1)
   if (hostname.startsWith('[') && hostname.endsWith(']')) {
     hostname = hostname.slice(1, -1);
   }
 
-  // Check if it's localhost
   const isLocalhost = LOCALHOST_ADDRESSES.includes(hostname);
-
-  // Check if it's in allowed list
   const isAllowed = allowedHosts.some((allowed) => hostname === allowed.toLowerCase());
 
   if (!isLocalhost && !isAllowed) {
@@ -48,7 +44,6 @@ export function validateEndpoint(endpoint: string, allowedHosts: string[]): void
     throw error;
   }
 
-  // Validate protocol
   if (url.protocol !== 'http:' && url.protocol !== 'https:') {
     throw new NetworkSecurityError(
       `Invalid protocol: ${url.protocol}. Only http: and https: are allowed.`
@@ -65,13 +60,9 @@ export function validateEndpoint(endpoint: string, allowedHosts: string[]): void
  */
 export function createSecureFetch(allowedHosts: string[]) {
   return async function secureFetch(url: string, options?: RequestInit): Promise<Response> {
-    // Validate before making request
     validateEndpoint(url, allowedHosts);
-
-    // Log the request (for audit trail)
     logger.info({ url }, 'Connecting to local endpoint');
 
-    // Create timeout controller if no signal provided
     let timeoutController: AbortController | null = null;
     let timeoutId: NodeJS.Timeout | null = null;
 

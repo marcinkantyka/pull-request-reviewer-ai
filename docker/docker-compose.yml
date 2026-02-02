@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   ollama:
     image: ollama/ollama:latest
@@ -12,14 +10,13 @@ services:
       - OLLAMA_HOST=0.0.0.0
     networks:
       - pr-review-network
-    # SECURITY: No external network access
-    network_mode: bridge
-    # Pull model on startup
-    command: >
-      sh -c "ollama serve & 
-             sleep 5 && 
-             ollama pull deepseek-coder:6.7b &&
-             wait"
+    command: ollama serve
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   pr-review:
     build:
@@ -36,14 +33,10 @@ services:
       - LLM_ENDPOINT=http://ollama:11434
       - LLM_MODEL=deepseek-coder:6.7b
       - CONFIG_PATH=/config/config.yml
-      # SECURITY: Enforce strict network mode
       - NETWORK_STRICT_MODE=true
     networks:
       - pr-review-network
-    # SECURITY: No external network access, only internal bridge network
-    dns: [] # Disable DNS resolution
-    network_mode: bridge
-    # Prevent outbound connections
+    dns: []
     cap_drop:
       - NET_RAW
       - NET_ADMIN
@@ -53,11 +46,10 @@ services:
       --format json
       --output /output/review.json
 
-# SECURITY: Internal network only, no external gateway
 networks:
   pr-review-network:
     driver: bridge
-    internal: true # CRITICAL: No external connectivity
+    internal: true
     ipam:
       config:
         - subnet: 172.28.0.0/16

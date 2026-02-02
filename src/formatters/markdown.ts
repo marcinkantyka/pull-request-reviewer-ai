@@ -4,12 +4,12 @@
 
 import type { ReviewResult, Issue } from '../types/review.js';
 
-const SEVERITY_EMOJIS: Record<Issue['severity'], string> = {
-  critical: '🔴',
-  high: '🟠',
-  medium: '🟡',
-  low: '🔵',
-  info: 'ℹ️',
+const SEVERITY_PREFIXES: Record<Issue['severity'], string> = {
+  critical: '[CRITICAL]',
+  high: '[HIGH]',
+  medium: '[MEDIUM]',
+  low: '[LOW]',
+  info: '[INFO]',
 };
 
 const SEVERITY_LABELS: Record<Issue['severity'], string> = {
@@ -23,7 +23,6 @@ const SEVERITY_LABELS: Record<Issue['severity'], string> = {
 export function formatMarkdown(result: ReviewResult, _colorize = false): string {
   const lines: string[] = [];
 
-  // Header
   lines.push('# Code Review Report');
   lines.push('');
   lines.push(`**Generated:** ${result.metadata.timestamp}`);
@@ -33,7 +32,6 @@ export function formatMarkdown(result: ReviewResult, _colorize = false): string 
   lines.push(`**Duration:** ${result.metadata.duration}ms`);
   lines.push('');
 
-  // Summary
   lines.push('## Summary');
   lines.push('');
   lines.push('| Metric | Value |');
@@ -48,7 +46,6 @@ export function formatMarkdown(result: ReviewResult, _colorize = false): string 
   lines.push(`| **Score** | **${result.summary.score}/10** |`);
   lines.push('');
 
-  // Files with issues
   const filesWithIssues = result.files.filter((f) => f.issues.length > 0);
   if (filesWithIssues.length > 0) {
     lines.push('## Issues by File');
@@ -61,10 +58,10 @@ export function formatMarkdown(result: ReviewResult, _colorize = false): string 
       lines.push('');
 
       for (const issue of file.issues) {
-        const emoji = SEVERITY_EMOJIS[issue.severity];
+        const prefix = SEVERITY_PREFIXES[issue.severity];
         const label = SEVERITY_LABELS[issue.severity];
         lines.push(
-          `#### ${emoji} ${label} - ${issue.category} ${issue.line > 0 ? `(Line ${issue.line})` : ''}`
+          `#### ${prefix} ${label} - ${issue.category} ${issue.line > 0 ? `(Line ${issue.line})` : ''}`
         );
         lines.push('');
         lines.push(issue.message);
@@ -88,9 +85,9 @@ export function formatMarkdown(result: ReviewResult, _colorize = false): string 
       }
     }
   } else {
-    lines.push('## ✅ No Issues Found');
+    lines.push('## No Issues Found');
     lines.push('');
-    lines.push('Great job! No issues were detected in the code changes.');
+    lines.push('No issues were detected in the code changes.');
     lines.push('');
   }
 

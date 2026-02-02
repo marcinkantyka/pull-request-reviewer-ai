@@ -1,0 +1,24 @@
+# Auto-generated compose file that runs setup if needed
+# This is used by the automated startup script
+
+services:
+  setup-check:
+    image: docker:cli
+    container_name: pr-review-setup-check
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ollama-data:/root/.ollama:ro
+    command: >
+      sh -c "
+        if ! docker run --rm -v pr-reviewer_ollama-data:/root/.ollama ollama/ollama:latest ollama list 2>/dev/null | grep -q 'deepseek-coder:6.7b'; then
+          echo 'Model not found - running setup...'
+          exit 1
+        else
+          echo 'Model found - ready to go!'
+          exit 0
+        fi
+      "
+
+volumes:
+  ollama-data:
+    external: true

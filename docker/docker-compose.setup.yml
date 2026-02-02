@@ -1,0 +1,25 @@
+# Temporary compose file for initial model download
+# This file is used automatically by setup scripts
+# DO NOT use this manually - it allows internet access
+
+services:
+  ollama-setup:
+    image: ollama/ollama:latest
+    container_name: pr-review-ollama-setup
+    volumes:
+      - ollama-data:/root/.ollama
+    ports:
+      - '11434:11434'
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    # No network restrictions for setup - allows model download
+    command: >
+      sh -c "ollama serve & 
+             sleep 5 && 
+             ollama pull deepseek-coder:6.7b &&
+             echo 'Model downloaded successfully' &&
+             wait"
+
+volumes:
+  ollama-data:
+    driver: local
