@@ -3,11 +3,27 @@
 [![CI](https://github.com/marcinkantyka/pull-request-reviewer-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/marcinkantyka/pull-request-reviewer-ai/actions/workflows/ci.yml)
 [![Release](https://github.com/marcinkantyka/pull-request-reviewer-ai/actions/workflows/release.yml/badge.svg)](https://github.com/marcinkantyka/pull-request-reviewer-ai/actions/workflows/release.yml)
 
-A CLI tool that uses local LLMs to review your code changes. Everything runs offline on your machine—no data leaves your computer.
+> **Offline-first Pull Request review CLI tool using local LLM**
 
-## What it does
+A command-line tool that uses local Large Language Models (LLMs) to automatically review your code changes. Everything runs offline on your machine—no data leaves your computer, ensuring complete privacy and security.
 
-Reviews code changes between git branches using a local LLM. It analyzes diffs, finds potential issues, and provides feedback in a format you can use in CI/CD or locally.
+## Description
+
+PR Review CLI is a privacy-focused code review tool that leverages local LLMs to analyze git diffs and provide intelligent code review feedback. It integrates seamlessly with your development workflow, supporting both local usage and CI/CD pipelines.
+
+### Key Features
+
+- 🔒 **100% Offline**: All analysis happens locally—no data transmission to external services
+- 🤖 **AI-Powered Reviews**: Uses local LLMs (Ollama, vLLM, llama.cpp) for intelligent code analysis
+- 📊 **Detailed Reports**: Generates comprehensive reviews with severity levels, categories, and actionable suggestions
+- 🔧 **Flexible Configuration**: Customize LLM settings, review parameters, and output formats
+- 🚀 **CI/CD Ready**: Integrates with GitHub Actions and other CI/CD platforms
+- 🐳 **Docker Support**: Run in containers with pre-configured setups
+- 📝 **Multiple Formats**: Output in JSON, Markdown, or terminal-friendly text
+
+### What it does
+
+Reviews code changes between git branches using a local LLM. It analyzes diffs, finds potential issues (bugs, security vulnerabilities, code quality issues), and provides structured feedback in a format you can use in CI/CD or locally.
 
 ## Installation
 
@@ -315,6 +331,14 @@ npm run lint
 # Type check
 npm run typecheck
 ```
+
+## Contributing
+
+We welcome contributions! Please see our [Contributing Guide](.github/CONTRIBUTING.md) for details on how to contribute to this project.
+
+- 📖 [Contributing Guidelines](.github/CONTRIBUTING.md)
+- 📋 [Code of Conduct](.github/CODE_OF_CONDUCT.md)
+- 🔒 [Security Policy](.github/SECURITY.md)
 
 ## License
 
