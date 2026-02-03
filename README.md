@@ -13,13 +13,13 @@ PR Review CLI is a privacy-focused code review tool that leverages local LLMs to
 
 ### Key Features
 
-- 🔒 **100% Offline**: All analysis happens locally—no data transmission to external services
-- 🤖 **AI-Powered Reviews**: Uses local LLMs (Ollama, vLLM, llama.cpp) for intelligent code analysis
-- 📊 **Detailed Reports**: Generates comprehensive reviews with severity levels, categories, and actionable suggestions
-- 🔧 **Flexible Configuration**: Customize LLM settings, review parameters, and output formats
-- 🚀 **CI/CD Ready**: Integrates with GitHub Actions and other CI/CD platforms
-- 🐳 **Docker Support**: Run in containers with pre-configured setups
-- 📝 **Multiple Formats**: Output in JSON, Markdown, or terminal-friendly text
+- **100% Offline**: All analysis happens locally—no data transmission to external services
+- **AI-Powered Reviews**: Uses local LLMs (Ollama, vLLM, llama.cpp) for intelligent code analysis
+- **Detailed Reports**: Generates comprehensive reviews with severity levels, categories, and actionable suggestions
+- **Flexible Configuration**: Customize LLM settings, review parameters, and output formats
+- **CI/CD Ready**: Integrates with GitHub Actions and other CI/CD platforms
+- **Docker Support**: Run in containers with pre-configured setups
+- **Multiple Formats**: Output in JSON, Markdown, or terminal-friendly text
 
 ### What it does
 
@@ -71,7 +71,7 @@ pr-review compare feature-branch main
 pr-review compare feature-branch main --format json --output review.json
 ```
 
-That's it. The tool will connect to your local LLM (default: `http://localhost:11434`) and analyze the changes.
+That's all you need. The tool connects to your local LLM (defaults to `http://localhost:11434`) and analyzes your changes.
 
 ## Example Output
 
@@ -102,29 +102,29 @@ Here's what a typical review looks like:
   Issues by File
   ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─  ─
 
-  📄 .github/workflows/ci.yml (yaml) +3 -3
+  File: .github/workflows/ci.yml (yaml) +3 -3
 
-    ℹ️ INFO [maintainability]:88
+    [INFO] [maintainability]:88
        The Docker image name has been changed to 'pull-request-reviewer-ai:test' but the associated GitHub Secrets should also be updated for consistency.
-       💡 Update ${ secrets.DOCKER_USERNAME } in .github/workflows/release.yml to match the new image name.
+       Suggestion: Update ${ secrets.DOCKER_USERNAME } in .github/workflows/release.yml to match the new image name.
 
-  📄 QUICKSTART.md (markdown) +2 -2
+  File: QUICKSTART.md (markdown) +2 -2
 
-    ℹ️ INFO [style]:14
+    [INFO] [style]:14
        The URL has been changed from 'pr-review-cli' to 'pull-request-reviewer-ai'. Ensure this change is intentional and that the repository name and description are updated accordingly.
-       💡 Verify that the new repository name and description are accurate and update them if necessary.
+       Suggestion: Verify that the new repository name and description are accurate and update them if necessary.
 
-  📄 examples/ci-integration.yml (yaml) +1 -1
+  File: examples/ci-integration.yml (yaml) +1 -1
 
-    ℹ️ INFO [maintainability]:35
+    [INFO] [maintainability]:35
        The tool name has changed from 'pr-review-cli' to 'pull-request-reviewer-ai'. Ensure that the new tool is compatible with the existing workflow.
-       💡 Verify compatibility and update any documentation if necessary.
+       Suggestion: Verify compatibility and update any documentation if necessary.
 
-  📄 src/cli/index.ts (typescript) +17 -1
+  File: src/cli/index.ts (typescript) +17 -1
 
-    🟡 MEDIUM [maintainability]:17
+    [MEDIUM] [maintainability]:17
        The version is hardcoded and falls back to '1.0.0' if the package.json cannot be read.
-       💡 Consider using a default value or log an error message when the version cannot be determined.
+       Suggestion: Consider using a default value or log an error message when the version cannot be determined.
 
 ════════════════════════════════════════════════════════════════════════════════
 ```
@@ -137,7 +137,7 @@ The report includes:
 
 ## Configuration
 
-Create a `pr-review.config.yml` file in your project root:
+You can create a `pr-review.config.yml` file in your project root to customize settings:
 
 ```yaml
 llm:
@@ -203,7 +203,7 @@ export LLM_API_KEY=your-key-here       # Optional
 export LLM_TIMEOUT=60000
 ```
 
-Run `pr-review config init` to generate a default config file with all available options.
+Run `pr-review config init` to generate a default config file with all the available options.
 
 ## Commands
 
@@ -283,18 +283,43 @@ Set the `provider` and `endpoint` in your config or via environment variables.
 
 ## Docker
 
+### Quick Start
+
+The easiest way to get started with Docker:
+
+```bash
+cd docker
+./start.sh
+```
+
+The script handles everything for you:
+- Downloads models if needed (only the first time)
+- Starts services with secure internal network (no internet access)
+- Blocks all outbound traffic for security
+
+### Manual Docker Usage
+
 ```bash
 # Build
 docker build -f docker/Dockerfile -t pull-request-reviewer-ai .
 
-# Run
+# Run standalone
 docker run --rm \
   -v $(pwd):/repos:ro \
   -e LLM_ENDPOINT=http://host.docker.internal:11434 \
   pull-request-reviewer-ai compare feature main
 ```
 
-See `docker/docker-compose.yml` for a complete setup with Ollama.
+### Docker Compose
+
+For a complete setup with Ollama and secure network isolation:
+
+```bash
+cd docker
+docker-compose up
+```
+
+The compose setup uses `internal: true` network mode, which completely blocks internet access from containers. Models are automatically downloaded on first run via `start.sh`. Check out `docker/README.md` for more details.
 
 ## CI/CD
 
@@ -375,44 +400,37 @@ For a more complete example with PR comments, see `examples/ci-integration.yml`.
 
 ## Security
 
-The tool enforces localhost-only connections. Any attempt to connect to external hosts is blocked. All code analysis happens locally—nothing leaves your machine.
+The tool only allows connections to localhost. If you try to connect to an external host, it will be blocked. Everything runs locally on your machine—your code never leaves your computer.
 
 ## Troubleshooting
 
-**"LLM provider is not available"**
+**LLM provider is not available**
 
-Make sure your LLM server is running:
+If you see this error, make sure your LLM server is actually running. For Ollama, try:
 
 ```bash
-# For Ollama
 ollama serve
 curl http://localhost:11434/api/tags
 ```
 
 **Timeout errors**
 
-Increase the timeout:
+If reviews are timing out, you can increase the timeout. Either use the CLI flag:
 
 ```bash
 pr-review compare feature main --timeout 120
 ```
 
-Or in config (timeout is in milliseconds):
+Or set it in your config file (timeout is in milliseconds):
 
 ```yaml
 llm:
-  timeout: 120000  # 2 minutes (120 seconds)
-```
-
-Or via CLI:
-
-```bash
-pr-review compare feature main --timeout 120  # 120 seconds
+  timeout: 120000  # 2 minutes
 ```
 
 **Network security errors**
 
-The tool only allows localhost connections. Make sure your endpoint uses `localhost`, `127.0.0.1`, or `::1`.
+The tool only allows localhost connections. Make sure your endpoint uses `localhost`, `127.0.0.1`, or `::1`. Any other hostname will be rejected.
 
 ## Development
 
@@ -437,9 +455,9 @@ npm run typecheck
 
 We welcome contributions! Please see our [Contributing Guide](.github/CONTRIBUTING.md) for details on how to contribute to this project.
 
-- 📖 [Contributing Guidelines](.github/CONTRIBUTING.md)
-- 📋 [Code of Conduct](.github/CODE_OF_CONDUCT.md)
-- 🔒 [Security Policy](.github/SECURITY.md)
+- [Contributing Guidelines](.github/CONTRIBUTING.md)
+- [Code of Conduct](.github/CODE_OF_CONDUCT.md)
+- [Security Policy](.github/SECURITY.md)
 
 ## License
 

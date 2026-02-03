@@ -38,15 +38,11 @@ export class ReviewEngine {
     const startTime = Date.now();
     logger.info({ fileCount: diffs.length, sourceBranch, targetBranch }, 'Starting code review');
 
-    // Filter files based on exclude patterns
     const filteredDiffs = this.filterFiles(diffs);
-
-    // Limit number of files
     const limitedDiffs = filteredDiffs.slice(0, this.config.review.maxFiles);
 
     logger.info({ fileCount: limitedDiffs.length }, 'Files to review after filtering');
 
-    // Handle empty diffs
     if (limitedDiffs.length === 0) {
       logger.info('No files to review after filtering');
       const duration = Date.now() - startTime;
@@ -72,10 +68,7 @@ export class ReviewEngine {
       };
     }
 
-    // Review files (with context-aware grouping if enabled)
     const fileReviews = await this.reviewFilesWithContextAwareGrouping(limitedDiffs);
-
-    // Generate summary
     const allIssues = fileReviews.flatMap((fr) => fr.issues);
     const summary = generateSummary(fileReviews.length, allIssues);
 
@@ -111,7 +104,6 @@ export class ReviewEngine {
    */
   private filterFiles(diffs: DiffInfo[]): DiffInfo[] {
     return diffs.filter((diff) => {
-      // Check exclude patterns
       for (const pattern of this.config.review.excludePatterns) {
         if (minimatch(diff.filePath, pattern)) {
           logger.debug({ filePath: diff.filePath, pattern }, 'File excluded');
@@ -119,7 +111,6 @@ export class ReviewEngine {
         }
       }
 
-      // Check max lines per file
       const totalLines = diff.additions + diff.deletions;
       if (totalLines > this.config.review.maxLinesPerFile) {
         logger.debug(
@@ -146,13 +137,10 @@ export class ReviewEngine {
       directoryDepth: this.config.review.directoryDepth ?? 2,
     };
 
-    // Group related files
     const groups = groupFiles(diffs, groupingOptions);
-
     const concurrency = this.config.review.concurrency ?? 3;
     const results: FileReview[] = [];
 
-    // Process groups in batches with concurrency control
     for (let i = 0; i < groups.length; i += concurrency) {
       const batch = groups.slice(i, i + concurrency);
       const batchResults = await Promise.allSettled(batch.map((group) => this.reviewGroup(group)));
@@ -162,7 +150,6 @@ export class ReviewEngine {
           results.push(...result.value);
         } else {
           logger.error({ error: result.reason }, 'Failed to review group');
-          // Create empty reviews for failed group
           const groupIndex = batchResults.indexOf(result);
           // eslint-disable-next-line security/detect-object-injection
           const group = batch[groupIndex];
@@ -189,7 +176,6 @@ export class ReviewEngine {
    */
   private async reviewGroup(group: FileGroup): Promise<FileReview[]> {
     if (group.groupType === 'isolated' || group.files.length === 1) {
-      // Review individually
       return [await this.reviewSingleFile(group.files[0])];
     }
 
@@ -225,11 +211,10 @@ export class ReviewEngine {
 
       const issuesByFile = await this.analyzer.analyzeFileGroup(
         group.files,
-        group.groupType, // TypeScript now knows this is 'directory' | 'feature'
+        group.groupType,
         group.context
       );
 
-      // Convert to FileReview objects
       return group.files.map((file) => ({
         path: file.filePath,
         language: file.language,
@@ -260,7 +245,6 @@ export class ReviewEngine {
         return result.value;
       }
 
-      // Return empty review for failed file
       // eslint-disable-next-line security/detect-object-injection
       const file = files[index];
       logger.warn({ filePath: file.filePath }, 'Failed to review file individually');
@@ -294,7 +278,6 @@ export class ReviewEngine {
         'Failed to review file'
       );
 
-      // Return file review with no issues on error
       return {
         path: diff.filePath,
         language: diff.language,

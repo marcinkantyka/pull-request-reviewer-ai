@@ -14,11 +14,11 @@ const SEVERITY_COLORS: Record<Issue['severity'], (text: string) => string> = {
 };
 
 const SEVERITY_ICONS: Record<Issue['severity'], string> = {
-  critical: '🔴',
-  high: '🟠',
-  medium: '🟡',
-  low: '🔵',
-  info: 'ℹ️',
+  critical: '[CRITICAL]',
+  high: '[HIGH]',
+  medium: '[MEDIUM]',
+  low: '[LOW]',
+  info: '[INFO]',
 };
 
 export function formatTerminal(result: ReviewResult, colorize = true, showDiff = false): string {
@@ -27,7 +27,6 @@ export function formatTerminal(result: ReviewResult, colorize = true, showDiff =
     ? chalk
     : ({ dim: (s: string): string => s, bold: (s: string): string => s } as typeof chalk);
 
-  // Header
   lines.push('');
   lines.push(color.bold('═'.repeat(80)));
   lines.push(color.bold('  Code Review Report'));
@@ -40,7 +39,6 @@ export function formatTerminal(result: ReviewResult, colorize = true, showDiff =
   lines.push(`  Duration:      ${result.metadata.duration}ms`);
   lines.push('');
 
-  // Summary
   lines.push(color.bold('  Summary'));
   lines.push(color.dim('  ─'.repeat(40)));
   lines.push(`  Files Reviewed: ${result.summary.filesReviewed}`);
@@ -67,13 +65,11 @@ export function formatTerminal(result: ReviewResult, colorize = true, showDiff =
     lines.push('');
   }
 
-  // Score
   const scoreColor =
     result.summary.score >= 8 ? chalk.green : result.summary.score >= 6 ? chalk.yellow : chalk.red;
   lines.push(`  Score: ${scoreColor.bold(`${result.summary.score}/10`)}`);
   lines.push('');
 
-  // Files with issues
   const filesWithIssues = result.files.filter((f) => f.issues.length > 0);
   if (filesWithIssues.length > 0) {
     lines.push(color.bold('  Issues by File'));
@@ -82,7 +78,7 @@ export function formatTerminal(result: ReviewResult, colorize = true, showDiff =
 
     for (const file of filesWithIssues) {
       lines.push(
-        color.bold(`  📄 ${file.path}`) +
+        color.bold(`  File: ${file.path}`) +
           ` (${file.language}) +${file.additions} -${file.deletions}`
       );
       lines.push('');
@@ -98,7 +94,7 @@ export function formatTerminal(result: ReviewResult, colorize = true, showDiff =
         lines.push(`       ${issue.message}`);
 
         if (issue.suggestion) {
-          lines.push(color.dim(`       💡 ${issue.suggestion}`));
+          lines.push(color.dim(`       Suggestion: ${issue.suggestion}`));
         }
 
         if (issue.code && showDiff) {
@@ -109,9 +105,9 @@ export function formatTerminal(result: ReviewResult, colorize = true, showDiff =
       }
     }
   } else {
-    lines.push(color.bold('  ✅ No Issues Found'));
+    lines.push(color.bold('  No Issues Found'));
     lines.push('');
-    lines.push('  Great job! No issues were detected in the code changes.');
+    lines.push('  No issues were detected in the code changes.');
     lines.push('');
   }
 

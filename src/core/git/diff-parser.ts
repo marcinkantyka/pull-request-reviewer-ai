@@ -26,9 +26,7 @@ export function parseDiff(diffOutput: string): GitDiff[] {
     // eslint-disable-next-line security/detect-object-injection
     const line = lines[i];
 
-    // File header
     if (line.startsWith('diff --git')) {
-      // Save previous diff if exists
       if (currentDiff) {
         diffs.push({
           ...currentDiff,
@@ -38,7 +36,6 @@ export function parseDiff(diffOutput: string): GitDiff[] {
         } as GitDiff);
       }
 
-      // Start new diff
       currentDiff = {};
       inHunk = false;
       additions = 0;
@@ -47,7 +44,6 @@ export function parseDiff(diffOutput: string): GitDiff[] {
       continue;
     }
 
-    // File paths
     if (line.startsWith('---')) {
       const match = line.match(/^--- a\/(.+)$/);
       if (match) {
@@ -67,21 +63,18 @@ export function parseDiff(diffOutput: string): GitDiff[] {
       continue;
     }
 
-    // Binary file indicator
     if (line.startsWith('Binary files')) {
       currentDiff!.binary = true;
       diffLines.push(line);
       continue;
     }
 
-    // Hunk header
     if (line.startsWith('@@')) {
       inHunk = true;
       diffLines.push(line);
       continue;
     }
 
-    // Diff content
     if (inHunk) {
       diffLines.push(line);
       if (line.startsWith('+') && !line.startsWith('+++')) {
@@ -92,7 +85,6 @@ export function parseDiff(diffOutput: string): GitDiff[] {
     }
   }
 
-  // Save last diff
   if (currentDiff) {
     diffs.push({
       ...currentDiff,

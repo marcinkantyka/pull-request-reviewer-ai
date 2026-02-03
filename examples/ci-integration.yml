@@ -83,11 +83,11 @@ jobs:
             **Score:** ${summary.score}/10
 
             ### Issues by Severity
-            - 🔴 Critical: ${summary.critical}
-            - 🟠 High: ${summary.high}
-            - 🟡 Medium: ${summary.medium}
-            - 🔵 Low: ${summary.low}
-            - ℹ️ Info: ${summary.info}
+            - Critical: ${summary.critical}
+            - High: ${summary.high}
+            - Medium: ${summary.medium}
+            - Low: ${summary.low}
+            - Info: ${summary.info}
 
             [View full review](./review.json)`;
 

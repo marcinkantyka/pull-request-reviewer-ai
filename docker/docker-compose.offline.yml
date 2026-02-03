@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Option 1: vLLM (alternative to Ollama)
   vllm:
@@ -54,7 +52,6 @@ services:
       - CONFIG_PATH=/config/config.yml
     networks:
       - pr-review-network
-    network_mode: bridge
     dns: []
     cap_drop:
       - NET_RAW

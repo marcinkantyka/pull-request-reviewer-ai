@@ -34,19 +34,15 @@ export function createCompareCommand(): Command {
     .option('--exit-code', 'Exit with code 1 if issues found')
     .action(async (sourceBranch: string, targetBranch: string, options: CLIOptions) => {
       try {
-        // Set log level
         if (options.verbose) {
           logger.level = 'debug';
         }
 
-        // Validate branch names
         validateBranchName(sourceBranch);
         validateBranchName(targetBranch);
 
-        // Load configuration
         const config = await loadConfig(options.config);
 
-        // Override config with CLI options
         if (options.timeout) {
           config.llm.timeout =
             (typeof options.timeout === 'string'
@@ -57,11 +53,9 @@ export function createCompareCommand(): Command {
           config.review.maxFiles = options.maxFiles;
         }
 
-        // Initialize git repository
         const repoPath = options.repoPath || process.cwd();
         const gitRepo = new GitRepositoryManager(repoPath);
 
-        // Get diff
         logger.info({ sourceBranch, targetBranch }, 'Getting diff between branches');
         const diffs = await gitRepo.getDiff(sourceBranch, targetBranch, config.git.maxDiffSize);
 
@@ -70,10 +64,8 @@ export function createCompareCommand(): Command {
           process.exit(0);
         }
 
-        // Initialize review engine
         const engine = new ReviewEngine(config);
 
-        // Health check
         logger.info('Checking LLM health...');
         const isHealthy = await engine.healthCheck();
         if (!isHealthy) {
@@ -83,10 +75,8 @@ export function createCompareCommand(): Command {
           );
         }
 
-        // Run review
         const result = await engine.review(diffs, sourceBranch, targetBranch);
 
-        // Filter by severity if requested
         if (options.severity !== 'all') {
           const minSeverity = options.severity === 'critical' ? 'critical' : 'high';
           const severityOrder = ['critical', 'high', 'medium', 'low', 'info'];
@@ -99,7 +89,6 @@ export function createCompareCommand(): Command {
             ),
           }));
 
-          // Recalculate summary
           const allIssues = result.files.flatMap((f) => f.issues);
           result.summary = {
             ...result.summary,
@@ -112,7 +101,6 @@ export function createCompareCommand(): Command {
           };
         }
 
-        // Format output
         const format = (options.format || config.output.defaultFormat) as 'text' | 'json' | 'md';
         let output: string;
 
@@ -131,7 +119,6 @@ export function createCompareCommand(): Command {
             );
         }
 
-        // Write output
         if (options.output) {
           const outputPath = path.resolve(options.output);
           // eslint-disable-next-line security/detect-non-literal-fs-filename
@@ -141,7 +128,6 @@ export function createCompareCommand(): Command {
           console.log(output);
         }
 
-        // Exit code
         if (options.exitCode && result.summary.totalIssues > 0) {
           process.exit(1);
         }

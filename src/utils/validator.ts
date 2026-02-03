@@ -33,7 +33,6 @@ export const ReviewConfigSchema = z.object({
   categories: z.array(
     z.enum(['security', 'bugs', 'performance', 'maintainability', 'style', 'bestPractices'])
   ),
-  // Context-aware options (optional)
   contextAware: z.boolean().optional(),
   groupByDirectory: z.boolean().optional(),
   groupByFeature: z.boolean().optional(),

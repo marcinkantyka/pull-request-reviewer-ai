@@ -32,7 +32,6 @@ export class ReviewAnalyzer {
         model: this.model,
       });
 
-      // Parse JSON response
       const issues = this.parseIssues(response.content, diffInfo.filePath);
       logger.debug(
         { filePath: diffInfo.filePath, issueCount: issues.length },
@@ -99,7 +98,6 @@ export class ReviewAnalyzer {
         model: this.model,
       });
 
-      // Parse issues and group by file
       const issuesByFile = this.parseGroupIssues(response.content, files);
 
       logger.debug(
@@ -136,10 +134,8 @@ export class ReviewAnalyzer {
    */
   private parseIssues(content: string, _filePath: string): Issue[] {
     try {
-      // Try to extract JSON from response (might be wrapped in markdown)
       let jsonContent = content.trim();
 
-      // Remove markdown code blocks if present
       if (jsonContent.startsWith('```')) {
         const lines = jsonContent.split('\n');
         const startIndex = lines.findIndex((line) => line.includes('['));
@@ -151,7 +147,6 @@ export class ReviewAnalyzer {
         }
       }
 
-      // Remove leading/trailing non-JSON text
       const jsonMatch = jsonContent.match(/\[[\s\S]*\]/);
       if (jsonMatch) {
         jsonContent = jsonMatch[0];
@@ -164,7 +159,6 @@ export class ReviewAnalyzer {
         return [];
       }
 
-      // Validate and normalize issues
       const issues: Issue[] = [];
       for (const item of parsed) {
         if (typeof item === 'object' && item !== null && 'severity' in item && 'message' in item) {
@@ -186,7 +180,6 @@ export class ReviewAnalyzer {
         { content, error: error instanceof Error ? error.message : String(error) },
         'Failed to parse LLM response as JSON'
       );
-      // Return empty array on parse failure (graceful degradation)
       return [];
     }
   }
@@ -221,16 +214,13 @@ export class ReviewAnalyzer {
   private parseGroupIssues(content: string, files: DiffInfo[]): Map<string, Issue[]> {
     const issuesByFile = new Map<string, Issue[]>();
 
-    // Initialize map with empty arrays
     for (const file of files) {
       issuesByFile.set(file.filePath, []);
     }
 
     try {
-      // Try to extract JSON from response
       let jsonContent = content.trim();
 
-      // Remove markdown code blocks if present
       if (jsonContent.startsWith('```')) {
         const lines = jsonContent.split('\n');
         const startIndex = lines.findIndex((line) => line.includes('['));
@@ -242,7 +232,6 @@ export class ReviewAnalyzer {
         }
       }
 
-      // Remove leading/trailing non-JSON text
       const jsonMatch = jsonContent.match(/\[[\s\S]*\]/);
       if (jsonMatch) {
         jsonContent = jsonMatch[0];
@@ -255,20 +244,16 @@ export class ReviewAnalyzer {
         return issuesByFile;
       }
 
-      // Create file path lookup for matching
       const filePathLookup = new Map<string, string>();
       for (const file of files) {
-        // Store both full path and basename for matching
         filePathLookup.set(file.filePath, file.filePath);
         filePathLookup.set(path.basename(file.filePath), file.filePath);
-        // Also try relative matching
         const parts = file.filePath.split('/');
         if (parts.length > 1) {
           filePathLookup.set(parts.slice(-2).join('/'), file.filePath);
         }
       }
 
-      // Parse issues and assign to files
       for (const item of parsed) {
         if (typeof item === 'object' && item !== null && 'severity' in item && 'message' in item) {
           const issue: Issue = {
@@ -280,13 +265,10 @@ export class ReviewAnalyzer {
             code: item.code ? String(item.code) : undefined,
           };
 
-          // Find which file this issue belongs to
           const filePath = typeof item.file === 'string' ? item.file : files[0]?.filePath || '';
 
-          // Try to match file path
           let targetFile = filePathLookup.get(filePath);
           if (!targetFile) {
-            // Try partial matching
             for (const [key, value] of filePathLookup.entries()) {
               if (filePath.includes(key) || key.includes(filePath)) {
                 targetFile = value;
@@ -295,7 +277,6 @@ export class ReviewAnalyzer {
             }
           }
 
-          // Default to first file if no match found
           if (!targetFile && files.length > 0) {
             targetFile = files[0].filePath;
             logger.warn(
