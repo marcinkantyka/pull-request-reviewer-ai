@@ -358,7 +358,7 @@ export class MockProvider implements LLMProvider {
 /**
  * Provider Factory
  */
-export function createLLMProvider(config: LLMConfig): LLMProvider {
+export function createLLMProvider(config: LLMConfig, allowedHosts?: string[]): LLMProvider {
   const { provider, endpoint, apiKey } = config;
 
   if (provider === 'mock') {
@@ -366,18 +366,21 @@ export function createLLMProvider(config: LLMConfig): LLMProvider {
   }
 
   // SECURITY: Validate endpoint is localhost only
-  const allowedHosts = ['localhost', '127.0.0.1', '::1'];
-  validateEndpoint(endpoint, allowedHosts);
+  const resolvedAllowedHosts =
+    allowedHosts && allowedHosts.length > 0
+      ? allowedHosts
+      : ['localhost', '127.0.0.1', '::1'];
+  validateEndpoint(endpoint, resolvedAllowedHosts);
 
   switch (provider) {
     case 'ollama':
-      return new OllamaProvider(endpoint, apiKey, allowedHosts);
+      return new OllamaProvider(endpoint, apiKey, resolvedAllowedHosts);
     case 'vllm':
-      return new VLLMProvider(endpoint, apiKey, allowedHosts);
+      return new VLLMProvider(endpoint, apiKey, resolvedAllowedHosts);
     case 'llamacpp':
-      return new LlamaCppProvider(endpoint, apiKey, allowedHosts);
+      return new LlamaCppProvider(endpoint, apiKey, resolvedAllowedHosts);
     case 'openai-compatible':
-      return new OpenAICompatibleProvider(endpoint, apiKey, allowedHosts);
+      return new OpenAICompatibleProvider(endpoint, apiKey, resolvedAllowedHosts);
     default:
       throw new ConfigError(`Unknown LLM provider: ${provider}`);
   }

@@ -131,6 +131,11 @@ export async function loadConfig(configPath?: string): Promise<AppConfig> {
   if (process.env.LLM_SEED) {
     config.llm!.seed = parseInt(process.env.LLM_SEED, 10);
   }
+  if (process.env.NETWORK_ALLOWED_HOSTS) {
+    config.network!.allowedHosts = process.env.NETWORK_ALLOWED_HOSTS.split(',')
+      .map((host) => host.trim())
+      .filter((host) => host.length > 0);
+  }
 
   try {
     return validateConfig(config) as AppConfig;
