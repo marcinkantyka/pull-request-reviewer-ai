@@ -367,9 +367,7 @@ export function createLLMProvider(config: LLMConfig, allowedHosts?: string[]): L
 
   // SECURITY: Validate endpoint is localhost only
   const resolvedAllowedHosts =
-    allowedHosts && allowedHosts.length > 0
-      ? allowedHosts
-      : ['localhost', '127.0.0.1', '::1'];
+    allowedHosts && allowedHosts.length > 0 ? allowedHosts : ['localhost', '127.0.0.1', '::1'];
   validateEndpoint(endpoint, resolvedAllowedHosts);
 
   switch (provider) {
