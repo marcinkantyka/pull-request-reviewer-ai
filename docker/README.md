@@ -71,6 +71,16 @@ cd /path/to/your/repo
 ./run-review.sh review --base main
 ```
 
+### Run via docker-compose (manual profile):
+
+Set `REPO_PATH` to the repository you want to scan, then run:
+
+```bash
+REPO_PATH=/path/to/your/repo docker-compose up pr-review
+```
+
+This mounts the repo read-only at `/workspace` and writes outputs to `docker/output`.
+
 ### Alternative: Manual docker run
 
 If you prefer to use docker run directly:
