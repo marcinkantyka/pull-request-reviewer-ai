@@ -2,6 +2,8 @@
  * Git-related types
  */
 
+import type { ChangeType } from '../../types/review.js';
+
 export interface GitDiff {
   filePath: string;
   additions: number;
@@ -10,6 +12,7 @@ export interface GitDiff {
   oldPath?: string;
   newPath?: string;
   binary?: boolean;
+  changeType?: ChangeType;
 }
 
 export interface GitRepository {

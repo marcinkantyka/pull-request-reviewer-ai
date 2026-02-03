@@ -6,6 +6,7 @@ import type { SeverityLevel, ReviewCategory } from './config.js';
 
 export interface ReviewResult {
   summary: ReviewSummary;
+  changeSummary: ChangeSummary;
   files: FileReview[];
   metadata: ReviewMetadata;
 }
@@ -46,12 +47,53 @@ export interface ReviewMetadata {
   duration: number; // milliseconds
 }
 
+export type ChangeType = 'added' | 'deleted' | 'modified' | 'renamed';
+
+export interface ChangeSummary {
+  totals: ChangeSummaryTotals;
+  topFiles: ChangeSummaryFile[];
+  topDirectories: ChangeSummaryDirectory[];
+  narrative: string;
+}
+
+export interface ChangeSummaryTotals {
+  files: number;
+  added: number;
+  deleted: number;
+  modified: number;
+  renamed: number;
+  additions: number;
+  deletions: number;
+  net: number;
+}
+
+export interface ChangeSummaryFile {
+  path: string;
+  changeType: ChangeType;
+  additions: number;
+  deletions: number;
+  totalChanges: number;
+}
+
+export interface ChangeSummaryDirectory {
+  path: string;
+  files: number;
+  additions: number;
+  deletions: number;
+  totalChanges: number;
+}
+
+export type ChangeSummaryStats = Omit<ChangeSummary, 'narrative'>;
+
 export interface DiffInfo {
   filePath: string;
   language: string;
   additions: number;
   deletions: number;
   diff: string;
+  changeType?: ChangeType;
+  oldPath?: string;
+  newPath?: string;
   oldContent?: string;
   newContent?: string;
 }

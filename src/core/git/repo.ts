@@ -97,6 +97,9 @@ export class GitRepositoryManager {
             additions: diff.additions,
             deletions: diff.deletions,
             diff: diff.diff,
+            changeType: diff.changeType,
+            oldPath: diff.oldPath,
+            newPath: diff.newPath,
           };
         });
 
@@ -137,6 +140,9 @@ export class GitRepositoryManager {
             additions: diff.additions,
             deletions: diff.deletions,
             diff: diff.diff,
+            changeType: diff.changeType,
+            oldPath: diff.oldPath,
+            newPath: diff.newPath,
           };
         });
     } catch (error) {

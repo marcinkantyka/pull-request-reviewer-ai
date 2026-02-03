@@ -11,6 +11,7 @@ import { loadConfig } from '../../core/storage/config.js';
 import { logger } from '../../utils/logger.js';
 import { validateBranchName } from '../../utils/validator.js';
 import { PRReviewError } from '../../utils/errors.js';
+import { minimatch } from 'minimatch';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -59,7 +60,11 @@ export function createReviewCommand(): Command {
         const currentBranch = repoInfo.currentBranch;
 
         logger.info({ currentBranch, baseBranch }, 'Getting diff between branches');
-        const diffs = await gitRepo.getBranchDiff(baseBranch, config.git.maxDiffSize);
+        let diffs = await gitRepo.getBranchDiff(baseBranch, config.git.maxDiffSize);
+
+        if (options.files) {
+          diffs = diffs.filter((diff) => minimatch(diff.filePath, options.files!));
+        }
 
         if (diffs.length === 0) {
           logger.info('No differences found between branches');

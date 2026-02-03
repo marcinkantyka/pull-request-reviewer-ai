@@ -20,6 +20,7 @@ export const DEFAULT_CONFIG: AppConfig = {
     timeout: parseInt(process.env.LLM_TIMEOUT || '60000', 10),
     maxTokens: parseInt(process.env.LLM_MAX_TOKENS || '2048', 10),
     apiKey: process.env.LLM_API_KEY,
+    seed: process.env.LLM_SEED ? parseInt(process.env.LLM_SEED, 10) : undefined,
     streaming: false,
     retries: 3,
     retryDelay: 1000,
@@ -45,6 +46,8 @@ export const DEFAULT_CONFIG: AppConfig = {
     ],
     severityLevels: ['critical', 'high', 'medium', 'low', 'info'],
     categories: ['security', 'bugs', 'performance', 'maintainability', 'style', 'bestPractices'],
+    includeAllFiles: false,
+    changeSummaryMode: 'deterministic',
     contextAware:
       process.env.CONTEXT_AWARE === undefined ? true : process.env.CONTEXT_AWARE === 'true',
     groupByDirectory:
@@ -124,6 +127,9 @@ export async function loadConfig(configPath?: string): Promise<AppConfig> {
   }
   if (process.env.LLM_API_KEY) {
     config.llm!.apiKey = process.env.LLM_API_KEY;
+  }
+  if (process.env.LLM_SEED) {
+    config.llm!.seed = parseInt(process.env.LLM_SEED, 10);
   }
 
   try {

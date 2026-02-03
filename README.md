@@ -142,12 +142,13 @@ You can create a `pr-review.config.yml` file in your project root to customize s
 ```yaml
 llm:
   endpoint: 'http://localhost:11434'  # Ollama default
-  provider: 'ollama'                   # Options: ollama, vllm, llamacpp, openai-compatible
+  provider: 'ollama'                   # Options: ollama, vllm, llamacpp, openai-compatible, mock
   model: 'deepseek-coder:6.7b'
   temperature: 0.2
   timeout: 60000                        # Milliseconds
   maxTokens: 2048
   apiKey: ''                           # Optional, for secured endpoints
+  seed: 42                             # Optional, for deterministic outputs
   streaming: false
   retries: 3
   retryDelay: 1000
@@ -171,7 +172,9 @@ review:
     - 'dist/**'
     - 'build/**'
     - '.git/**'
-  
+  includeAllFiles: false              # Set true to ignore exclude patterns and size limits
+  changeSummaryMode: deterministic    # deterministic | llm
+
   # Context-aware review options
   contextAware: true                   # Enable multi-file context review
   groupByDirectory: true               # Group files in same directory
@@ -201,6 +204,7 @@ export LLM_MODEL=deepseek-coder:6.7b
 export LLM_PROVIDER=ollama
 export LLM_API_KEY=your-key-here       # Optional
 export LLM_TIMEOUT=60000
+export LLM_SEED=42                     # Optional
 ```
 
 Run `pr-review config init` to generate a default config file with all the available options.

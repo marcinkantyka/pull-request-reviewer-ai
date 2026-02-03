@@ -8,12 +8,13 @@ import { ValidationError } from './errors.js';
 
 export const LLMConfigSchema = z.object({
   endpoint: z.string().url(),
-  provider: z.enum(['ollama', 'vllm', 'llamacpp', 'openai-compatible']),
+  provider: z.enum(['ollama', 'vllm', 'llamacpp', 'openai-compatible', 'mock']),
   model: z.string().min(1),
   temperature: z.number().min(0).max(2),
   timeout: z.number().positive(),
   maxTokens: z.number().positive().optional(),
   apiKey: z.string().optional(),
+  seed: z.number().int().min(0).optional(),
   streaming: z.boolean().optional(),
   retries: z.number().min(0).max(10).optional(),
   retryDelay: z.number().positive().optional(),
@@ -33,6 +34,8 @@ export const ReviewConfigSchema = z.object({
   categories: z.array(
     z.enum(['security', 'bugs', 'performance', 'maintainability', 'style', 'bestPractices'])
   ),
+  includeAllFiles: z.boolean().optional(),
+  changeSummaryMode: z.enum(['deterministic', 'llm']).optional(),
   contextAware: z.boolean().optional(),
   groupByDirectory: z.boolean().optional(),
   groupByFeature: z.boolean().optional(),
