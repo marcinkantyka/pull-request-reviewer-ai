@@ -22,6 +22,7 @@ Security vulnerabilities should be reported privately to protect users.
 Please report security vulnerabilities through [GitHub Security Advisories](https://github.com/marcinkantyka/pull-request-reviewer-ai/security/advisories/new) or by opening a private security issue.
 
 Include the following information:
+
 - Description of the vulnerability
 - Steps to reproduce
 - Potential impact

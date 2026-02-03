@@ -26,6 +26,7 @@ docker-compose build pr-review
 ```
 
 The version will automatically be used in:
+
 - Docker image tags
 - All scripts that reference the image
 

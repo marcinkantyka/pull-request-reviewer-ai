@@ -40,32 +40,28 @@ async function createRepo(): Promise<string> {
 const suite = process.env.RUN_E2E === 'true' ? describe : describe.skip;
 
 suite('Ollama E2E', () => {
-  it(
-    'runs compare with a real Ollama instance',
-    async () => {
-      const repoPath = await createRepo();
-      const outputPath = path.join(repoPath, 'review.json');
+  it('runs compare with a real Ollama instance', async () => {
+    const repoPath = await createRepo();
+    const outputPath = path.join(repoPath, 'review.json');
 
-      const env = {
-        ...process.env,
-        LOG_LEVEL: 'silent',
-        NODE_ENV: 'test',
-      };
+    const env = {
+      ...process.env,
+      LOG_LEVEL: 'silent',
+      NODE_ENV: 'test',
+    };
 
-      await execFileAsync(
-        'node',
-        [CLI_PATH, 'compare', 'feature', 'main', '--format', 'json', '--output', outputPath],
-        { cwd: repoPath, env, timeout: 120_000 }
-      );
+    await execFileAsync(
+      'node',
+      [CLI_PATH, 'compare', 'feature', 'main', '--format', 'json', '--output', outputPath],
+      { cwd: repoPath, env, timeout: 120_000 }
+    );
 
-      const output = await readFile(outputPath, 'utf-8');
-      const result = JSON.parse(output) as {
-        changeSummary: { totals: { files: number } };
-      };
+    const output = await readFile(outputPath, 'utf-8');
+    const result = JSON.parse(output) as {
+      changeSummary: { totals: { files: number } };
+    };
 
-      expect(result.changeSummary.totals.files).toBe(1);
-      await rm(repoPath, { recursive: true, force: true });
-    },
-    120_000
-  );
+    expect(result.changeSummary.totals.files).toBe(1);
+    await rm(repoPath, { recursive: true, force: true });
+  }, 120_000);
 });

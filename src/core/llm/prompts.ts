@@ -122,10 +122,7 @@ Focus on real problems, especially cross-file issues that wouldn't be caught in 
 /**
  * Creates a change summary prompt
  */
-export function createChangeSummaryPrompt(
-  diffs: DiffInfo[],
-  summary: ChangeSummaryStats
-): string {
+export function createChangeSummaryPrompt(diffs: DiffInfo[], summary: ChangeSummaryStats): string {
   const fileList = diffs
     .map((diff) => {
       const changeType = diff.changeType || 'modified';

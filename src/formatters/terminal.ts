@@ -65,9 +65,7 @@ export function formatTerminal(result: ReviewResult, colorize = true, showDiff =
     lines.push('    None');
   } else {
     for (const file of result.changeSummary.topFiles) {
-      lines.push(
-        `    ${file.path} (${file.changeType}) +${file.additions} -${file.deletions}`
-      );
+      lines.push(`    ${file.path} (${file.changeType}) +${file.additions} -${file.deletions}`);
     }
   }
   lines.push('');

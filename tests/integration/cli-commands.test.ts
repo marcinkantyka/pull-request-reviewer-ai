@@ -13,7 +13,6 @@ import { promisify } from 'node:util';
 const execFileAsync = promisify(execFile);
 const CLI_PATH = path.resolve(process.cwd(), 'dist/cli/index.js');
 
-
 async function runGit(args: string[], cwd: string): Promise<void> {
   await execFileAsync('git', args, { cwd });
 }
@@ -74,7 +73,9 @@ describe('CLI integration', () => {
 
     const output = await readFile(outputPath, 'utf-8');
     const result = JSON.parse(output) as {
-      changeSummary: { totals: { files: number; added: number; deleted: number; modified: number } };
+      changeSummary: {
+        totals: { files: number; added: number; deleted: number; modified: number };
+      };
       summary: { filesReviewed: number };
     };
 
