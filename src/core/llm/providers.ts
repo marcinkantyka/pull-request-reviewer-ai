@@ -378,8 +378,6 @@ export function createLLMProvider(config: LLMConfig): LLMProvider {
       return new LlamaCppProvider(endpoint, apiKey, allowedHosts);
     case 'openai-compatible':
       return new OpenAICompatibleProvider(endpoint, apiKey, allowedHosts);
-    case 'mock':
-      return new MockProvider();
     default:
       throw new ConfigError(`Unknown LLM provider: ${provider}`);
   }
