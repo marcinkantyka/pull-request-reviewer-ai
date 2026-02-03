@@ -23,7 +23,15 @@ export class LLMClient {
 
     const startTime = Date.now();
 
+    let timeoutId: NodeJS.Timeout | null = null;
     try {
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(
+          () => reject(new LLMError(`Request timeout after ${this.timeout}ms`)),
+          this.timeout
+        );
+      });
+
       const response = await Promise.race([
         withRetry(() => this.provider.analyze(request), {
           retries: this.retries,
@@ -32,12 +40,7 @@ export class LLMClient {
             logger.warn({ attempt, error: error.message }, 'LLM request failed, retrying');
           },
         }),
-        new Promise<never>((_, reject) =>
-          setTimeout(
-            () => reject(new LLMError(`Request timeout after ${this.timeout}ms`)),
-            this.timeout
-          )
-        ),
+        timeoutPromise,
       ]);
 
       const duration = Date.now() - startTime;
@@ -70,17 +73,27 @@ export class LLMClient {
         `LLM analysis failed: ${error instanceof Error ? error.message : String(error)}`,
         error
       );
+    } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
     }
   }
 
   async healthCheck(): Promise<boolean> {
+    let timeoutId: NodeJS.Timeout | null = null;
     try {
-      return await Promise.race([
-        this.provider.healthCheck(),
-        new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 5000)),
-      ]);
+      const timeoutPromise = new Promise<boolean>((resolve) => {
+        timeoutId = setTimeout(() => resolve(false), 5000);
+      });
+
+      return await Promise.race([this.provider.healthCheck(), timeoutPromise]);
     } catch {
       return false;
+    } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
     }
   }
 }

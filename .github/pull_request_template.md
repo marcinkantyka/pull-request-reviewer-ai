@@ -25,9 +25,9 @@ Related to #
 
 <!-- List the main changes in this PR -->
 
-- 
-- 
-- 
+-
+-
+-
 
 ## Testing
 
@@ -39,9 +39,9 @@ Related to #
 
 ### Test Steps
 
-1. 
-2. 
-3. 
+1.
+2.
+3.
 
 ## Checklist
 

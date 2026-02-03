@@ -5,11 +5,12 @@ llm:
   # endpoint: "http://localhost:8080"  # llama.cpp server alternative
   # endpoint: "http://localhost:1234/v1"  # LM Studio alternative
 
-  provider: 'ollama' # Options: ollama, vllm, llamacpp, openai-compatible
+  provider: 'ollama' # Options: ollama, vllm, llamacpp, openai-compatible, mock
   model: 'deepseek-coder:6.7b'
   temperature: 0.2
   timeout: 60000
   maxTokens: 2048
+  seed: 42
 
   # API authentication (optional, for secured local endpoints)
   apiKey: '' # Can be set via env var: LLM_API_KEY
@@ -59,6 +60,9 @@ review:
     - maintainability
     - style
     - bestPractices
+
+  includeAllFiles: false
+  changeSummaryMode: deterministic
 
   # Context-aware review options
   contextAware: true # Enable multi-file context review

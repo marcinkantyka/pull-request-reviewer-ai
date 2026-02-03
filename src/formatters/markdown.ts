@@ -32,6 +32,45 @@ export function formatMarkdown(result: ReviewResult, _colorize = false): string 
   lines.push(`**Duration:** ${result.metadata.duration}ms`);
   lines.push('');
 
+  lines.push('## Change Summary');
+  lines.push('');
+  lines.push(
+    `**Files Changed:** ${result.changeSummary.totals.files} (Added: ${result.changeSummary.totals.added}, Deleted: ${result.changeSummary.totals.deleted}, Modified: ${result.changeSummary.totals.modified}, Renamed: ${result.changeSummary.totals.renamed})`
+  );
+  lines.push(
+    `**Lines:** +${result.changeSummary.totals.additions} -${result.changeSummary.totals.deletions} (Net: ${result.changeSummary.totals.net})`
+  );
+  lines.push('');
+
+  lines.push('**Top Files by Churn**');
+  lines.push('');
+  if (result.changeSummary.topFiles.length === 0) {
+    lines.push('- None');
+  } else {
+    for (const file of result.changeSummary.topFiles) {
+      lines.push(`- ${file.path} (${file.changeType}, +${file.additions} -${file.deletions})`);
+    }
+  }
+  lines.push('');
+
+  lines.push('**Top Directories**');
+  lines.push('');
+  if (result.changeSummary.topDirectories.length === 0) {
+    lines.push('- None');
+  } else {
+    for (const directory of result.changeSummary.topDirectories) {
+      lines.push(
+        `- ${directory.path} (files: ${directory.files}, +${directory.additions} -${directory.deletions})`
+      );
+    }
+  }
+  lines.push('');
+
+  lines.push('**Narrative**');
+  lines.push('');
+  lines.push(result.changeSummary.narrative);
+  lines.push('');
+
   lines.push('## Summary');
   lines.push('');
   lines.push('| Metric | Value |');

@@ -12,6 +12,7 @@ cd docker
 ```
 
 The script handles everything automatically:
+
 1. Checks if models are already downloaded
 2. Downloads models if needed (first time only)
 3. Starts services with secure internal network (no internet access)
@@ -44,6 +45,7 @@ This approach is universal - you can review any git repository without modifying
 ## Manual Usage
 
 ### Standard startup (after initial setup):
+
 ```bash
 docker-compose up -d
 ```
@@ -90,17 +92,20 @@ docker run --rm -it \
 ```
 
 ### Download models manually (if start.sh fails):
+
 ```bash
 ./setup-models.sh
 ```
 
 ### View logs:
+
 ```bash
 docker-compose logs -f ollama
 docker-compose logs -f pr-review
 ```
 
 ### Stop services:
+
 ```bash
 docker-compose down
 ```
@@ -126,11 +131,14 @@ The model is stored in a Docker volume (`ollama-data`), so it persists across re
 ## Troubleshooting
 
 **"Model not found" errors:**
+
 - Run `./setup-models.sh` to download models
 
 **"Cannot connect to ollama":**
+
 - Check if ollama is running: `docker-compose ps`
 - Check logs: `docker-compose logs ollama`
 
 **Port conflicts:**
+
 - Change port mapping in `docker-compose.yml`: `'11434:11434'` → `'11435:11434'`

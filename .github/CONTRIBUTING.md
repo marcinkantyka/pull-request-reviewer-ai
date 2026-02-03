@@ -40,24 +40,27 @@ Feature requests are welcome! Please use the [feature request template](.github/
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - npm or yarn
 - Git
 
 ### Getting Started
 
 1. Clone your fork:
+
    ```bash
    git clone https://github.com/YOUR_USERNAME/pull-request-reviewer-ai.git
    cd pull-request-reviewer-ai
    ```
 
 2. Install dependencies:
+
    ```bash
    npm install
    ```
 
 3. Build the project:
+
    ```bash
    npm run build
    ```
@@ -70,6 +73,7 @@ Feature requests are welcome! Please use the [feature request template](.github/
 ### Development Workflow
 
 1. Create a feature branch:
+
    ```bash
    git checkout -b feature/your-feature-name
    # or
@@ -77,6 +81,7 @@ Feature requests are welcome! Please use the [feature request template](.github/
    ```
 
 2. Make your changes and test them:
+
    ```bash
    npm run build
    npm test
@@ -85,12 +90,14 @@ Feature requests are welcome! Please use the [feature request template](.github/
    ```
 
 3. Commit your changes:
+
    ```bash
    git add .
    git commit -m "feat: add your feature description"
    ```
 
 4. Push to your fork:
+
    ```bash
    git push origin feature/your-feature-name
    ```
@@ -132,6 +139,7 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/):
 - `chore:` for maintenance tasks
 
 Examples:
+
 ```
 feat: add support for custom LLM providers
 fix: handle timeout errors gracefully

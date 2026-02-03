@@ -2,9 +2,15 @@
  * Code analysis using LLM
  */
 
-import type { DiffInfo, Issue } from '../../types/review.js';
+import type { DiffInfo, Issue, ChangeSummaryStats } from '../../types/review.js';
 import type { LLMClient } from '../llm/client.js';
-import { SYSTEM_PROMPT, createReviewPrompt, createGroupReviewPrompt } from '../llm/prompts.js';
+import {
+  SYSTEM_PROMPT,
+  CHANGE_SUMMARY_SYSTEM_PROMPT,
+  createReviewPrompt,
+  createGroupReviewPrompt,
+  createChangeSummaryPrompt,
+} from '../llm/prompts.js';
 import { LLMError } from '../../utils/errors.js';
 import { logger } from '../../utils/logger.js';
 import path from 'path';
@@ -13,7 +19,8 @@ export class ReviewAnalyzer {
   constructor(
     private readonly llmClient: LLMClient,
     private readonly model: string,
-    private readonly temperature: number
+    private readonly temperature: number,
+    private readonly seed?: number
   ) {}
 
   /**
@@ -30,6 +37,7 @@ export class ReviewAnalyzer {
         userPrompt: prompt,
         temperature: this.temperature,
         model: this.model,
+        seed: this.seed,
       });
 
       const issues = this.parseIssues(response.content, diffInfo.filePath);
@@ -96,6 +104,7 @@ export class ReviewAnalyzer {
         userPrompt: prompt,
         temperature: this.temperature,
         model: this.model,
+        seed: this.seed,
       });
 
       const issuesByFile = this.parseGroupIssues(response.content, files);
@@ -124,6 +133,38 @@ export class ReviewAnalyzer {
 
       throw new LLMError(
         `Failed to analyze file group: ${error instanceof Error ? error.message : String(error)}`,
+        error
+      );
+    }
+  }
+
+  /**
+   * Summarize change set for user-facing report
+   */
+  async summarizeChanges(diffs: DiffInfo[], summary: ChangeSummaryStats): Promise<string> {
+    try {
+      const prompt = createChangeSummaryPrompt(diffs, summary);
+      const response = await this.llmClient.analyze({
+        systemPrompt: CHANGE_SUMMARY_SYSTEM_PROMPT,
+        userPrompt: prompt,
+        temperature: Math.min(this.temperature, 0.3),
+        model: this.model,
+        seed: this.seed,
+      });
+
+      return sanitizeSummary(response.content);
+    } catch (error) {
+      logger.error(
+        { error: error instanceof Error ? error.message : String(error) },
+        'Change summary analysis failed'
+      );
+
+      if (error instanceof LLMError) {
+        throw error;
+      }
+
+      throw new LLMError(
+        `Failed to summarize changes: ${error instanceof Error ? error.message : String(error)}`,
         error
       );
     }
@@ -303,4 +344,16 @@ export class ReviewAnalyzer {
       return issuesByFile;
     }
   }
+}
+
+function sanitizeSummary(content: string): string {
+  let text = content.trim();
+  if (text.startsWith('```')) {
+    const lines = text.split('\n');
+    const endIndex = lines.findIndex((line, index) => index > 0 && line.startsWith('```'));
+    if (endIndex !== -1) {
+      text = lines.slice(1, endIndex).join('\n').trim();
+    }
+  }
+  return text || 'Change summary unavailable.';
 }

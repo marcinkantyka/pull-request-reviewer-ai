@@ -3,7 +3,7 @@
  * Supports YAML config files with environment variable overrides
  */
 
-export type LLMProvider = 'ollama' | 'vllm' | 'llamacpp' | 'openai-compatible';
+export type LLMProvider = 'ollama' | 'vllm' | 'llamacpp' | 'openai-compatible' | 'mock';
 
 export interface LLMConfig {
   endpoint: string;
@@ -13,6 +13,7 @@ export interface LLMConfig {
   timeout: number;
   maxTokens?: number;
   apiKey?: string;
+  seed?: number;
   streaming?: boolean;
   retries?: number;
   retryDelay?: number;
@@ -30,6 +31,18 @@ export interface ReviewConfig {
   excludePatterns: string[];
   severityLevels: SeverityLevel[];
   categories: ReviewCategory[];
+  /**
+   * Include all files in review, ignoring exclude patterns and size limits.
+   * Default: true
+   */
+  includeAllFiles?: boolean;
+  /**
+   * Change summary generation mode.
+   * - deterministic: build narrative from stats only (repeatable)
+   * - llm: LLM-generated narrative
+   * Default: deterministic
+   */
+  changeSummaryMode?: 'deterministic' | 'llm';
   /**
    * Enable context-aware review that groups related files together.
    * When enabled, files in the same directory or feature are reviewed together

@@ -2,7 +2,7 @@
  * Main review engine orchestrating the review process
  */
 
-import type { DiffInfo, ReviewResult, FileReview } from '../../types/review.js';
+import type { DiffInfo, ReviewResult, FileReview, ChangeSummaryStats } from '../../types/review.js';
 import type { AppConfig } from '../../types/config.js';
 import { ReviewAnalyzer } from './analyzer.js';
 import { generateSummary } from './scorer.js';
@@ -11,6 +11,7 @@ import { createLLMProvider } from '../llm/providers.js';
 import { logger } from '../../utils/logger.js';
 import { minimatch } from 'minimatch';
 import { groupFiles, type FileGroup, type GroupingOptions } from './file-grouper.js';
+import { buildChangeSummaryStats, buildDeterministicNarrative } from './change-summary.js';
 
 export class ReviewEngine {
   private llmClient: LLMClient;
@@ -24,7 +25,12 @@ export class ReviewEngine {
       config.llm.retries || 3,
       config.llm.retryDelay || 1000
     );
-    this.analyzer = new ReviewAnalyzer(this.llmClient, config.llm.model, config.llm.temperature);
+    this.analyzer = new ReviewAnalyzer(
+      this.llmClient,
+      config.llm.model,
+      config.llm.temperature,
+      config.llm.seed
+    );
   }
 
   /**
@@ -39,7 +45,9 @@ export class ReviewEngine {
     logger.info({ fileCount: diffs.length, sourceBranch, targetBranch }, 'Starting code review');
 
     const filteredDiffs = this.filterFiles(diffs);
-    const limitedDiffs = filteredDiffs.slice(0, this.config.review.maxFiles);
+    const limitedDiffs = this.config.review.includeAllFiles
+      ? filteredDiffs
+      : filteredDiffs.slice(0, this.config.review.maxFiles);
 
     logger.info({ fileCount: limitedDiffs.length }, 'Files to review after filtering');
 
@@ -57,6 +65,21 @@ export class ReviewEngine {
           info: 0,
           score: 10,
         },
+        changeSummary: {
+          totals: {
+            files: 0,
+            added: 0,
+            deleted: 0,
+            modified: 0,
+            renamed: 0,
+            additions: 0,
+            deletions: 0,
+            net: 0,
+          },
+          topFiles: [],
+          topDirectories: [],
+          narrative: 'No changes detected.',
+        },
         files: [],
         metadata: {
           timestamp: new Date().toISOString(),
@@ -68,6 +91,12 @@ export class ReviewEngine {
       };
     }
 
+    const changeSummaryStats = buildChangeSummaryStats(limitedDiffs, {
+      directoryDepth: this.config.review.directoryDepth ?? 2,
+    });
+    const changeNarrative = await this.buildChangeNarrative(limitedDiffs, changeSummaryStats);
+    const changeSummary = { ...changeSummaryStats, narrative: changeNarrative };
+
     const fileReviews = await this.reviewFilesWithContextAwareGrouping(limitedDiffs);
     const allIssues = fileReviews.flatMap((fr) => fr.issues);
     const summary = generateSummary(fileReviews.length, allIssues);
@@ -76,6 +105,7 @@ export class ReviewEngine {
 
     const result: ReviewResult = {
       summary,
+      changeSummary,
       files: fileReviews,
       metadata: {
         timestamp: new Date().toISOString(),
@@ -103,6 +133,10 @@ export class ReviewEngine {
    * Filter files based on exclude patterns
    */
   private filterFiles(diffs: DiffInfo[]): DiffInfo[] {
+    if (this.config.review.includeAllFiles) {
+      return diffs;
+    }
+
     return diffs.filter((diff) => {
       for (const pattern of this.config.review.excludePatterns) {
         if (minimatch(diff.filePath, pattern)) {
@@ -293,5 +327,29 @@ export class ReviewEngine {
    */
   async healthCheck(): Promise<boolean> {
     return this.llmClient.healthCheck();
+  }
+
+  private async buildChangeNarrative(
+    diffs: DiffInfo[],
+    summary: ChangeSummaryStats
+  ): Promise<string> {
+    if (diffs.length === 0) {
+      return 'No changes detected.';
+    }
+
+    const mode = this.config.review.changeSummaryMode ?? 'deterministic';
+    if (mode === 'deterministic') {
+      return buildDeterministicNarrative(summary);
+    }
+
+    try {
+      return await this.analyzer.summarizeChanges(diffs, summary);
+    } catch (error) {
+      logger.warn(
+        { error: error instanceof Error ? error.message : String(error) },
+        'Failed to generate change summary narrative'
+      );
+      return 'Change summary narrative unavailable due to an error.';
+    }
   }
 }

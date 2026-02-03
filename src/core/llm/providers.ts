@@ -27,15 +27,19 @@ export class OllamaProvider implements LLMProvider {
 
   async analyze(request: AnalyzeRequest): Promise<AnalyzeResponse> {
     const url = `${this.endpoint}/api/generate`;
+    const body: Record<string, unknown> = {
+      model: request.model,
+      prompt: `${request.systemPrompt}\n\n${request.userPrompt}`,
+      temperature: request.temperature,
+      stream: false,
+    };
+    if (request.seed !== undefined) {
+      body.options = { seed: request.seed };
+    }
     const response = await this.secureFetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: request.model,
-        prompt: `${request.systemPrompt}\n\n${request.userPrompt}`,
-        temperature: request.temperature,
-        stream: false,
-      }),
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {
@@ -100,15 +104,20 @@ export class VLLMProvider implements LLMProvider {
       headers['Authorization'] = `Bearer ${this.apiKey}`;
     }
 
+    const body: Record<string, unknown> = {
+      model: request.model,
+      prompt: `${request.systemPrompt}\n\n${request.userPrompt}`,
+      temperature: request.temperature,
+      max_tokens: request.maxTokens,
+    };
+    if (request.seed !== undefined) {
+      body.seed = request.seed;
+    }
+
     const response = await this.secureFetch(url, {
       method: 'POST',
       headers,
-      body: JSON.stringify({
-        model: request.model,
-        prompt: `${request.systemPrompt}\n\n${request.userPrompt}`,
-        temperature: request.temperature,
-        max_tokens: request.maxTokens,
-      }),
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {
@@ -175,14 +184,18 @@ export class LlamaCppProvider implements LLMProvider {
 
   async analyze(request: AnalyzeRequest): Promise<AnalyzeResponse> {
     const url = `${this.endpoint}/completion`;
+    const body: Record<string, unknown> = {
+      prompt: `${request.systemPrompt}\n\n${request.userPrompt}`,
+      temperature: request.temperature,
+      n_predict: request.maxTokens || 2048,
+    };
+    if (request.seed !== undefined) {
+      body.seed = request.seed;
+    }
     const response = await this.secureFetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        prompt: `${request.systemPrompt}\n\n${request.userPrompt}`,
-        temperature: request.temperature,
-        n_predict: request.maxTokens || 2048,
-      }),
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {
@@ -251,18 +264,23 @@ export class OpenAICompatibleProvider implements LLMProvider {
       headers['Authorization'] = `Bearer ${this.apiKey}`;
     }
 
+    const body: Record<string, unknown> = {
+      model: request.model,
+      messages: [
+        { role: 'system', content: request.systemPrompt },
+        { role: 'user', content: request.userPrompt },
+      ],
+      temperature: request.temperature,
+      max_tokens: request.maxTokens,
+    };
+    if (request.seed !== undefined) {
+      body.seed = request.seed;
+    }
+
     const response = await this.secureFetch(url, {
       method: 'POST',
       headers,
-      body: JSON.stringify({
-        model: request.model,
-        messages: [
-          { role: 'system', content: request.systemPrompt },
-          { role: 'user', content: request.userPrompt },
-        ],
-        temperature: request.temperature,
-        max_tokens: request.maxTokens,
-      }),
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {
@@ -316,10 +334,36 @@ export class OpenAICompatibleProvider implements LLMProvider {
 }
 
 /**
+ * Mock Provider (for tests and offline validation)
+ */
+export class MockProvider implements LLMProvider {
+  public readonly name = 'mock';
+
+  async analyze(_request: AnalyzeRequest): Promise<AnalyzeResponse> {
+    return {
+      content: '[]',
+      usage: {
+        promptTokens: 0,
+        completionTokens: 0,
+        totalTokens: 0,
+      },
+    };
+  }
+
+  async healthCheck(): Promise<boolean> {
+    return true;
+  }
+}
+
+/**
  * Provider Factory
  */
 export function createLLMProvider(config: LLMConfig): LLMProvider {
   const { provider, endpoint, apiKey } = config;
+
+  if (provider === 'mock') {
+    return new MockProvider();
+  }
 
   // SECURITY: Validate endpoint is localhost only
   const allowedHosts = ['localhost', '127.0.0.1', '::1'];

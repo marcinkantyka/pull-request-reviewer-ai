@@ -8,6 +8,7 @@ export interface AnalyzeRequest {
   temperature: number;
   maxTokens?: number;
   model: string;
+  seed?: number;
 }
 
 export interface AnalyzeResponse {

@@ -40,9 +40,15 @@ describe('NetworkValidator', () => {
       const secureFetch = createSecureFetch(['localhost', '127.0.0.1']);
 
       // This should not throw (even if request fails, validation passes)
-      await expect(
-        secureFetch('http://localhost:11434/api/test', { method: 'GET' })
-      ).rejects.not.toThrow(NetworkSecurityError);
+      const localResult = await secureFetch('http://localhost:11434/api/test', {
+        method: 'GET',
+      }).then(
+        (response) => response,
+        (error) => error as Error
+      );
+      if (localResult instanceof Error) {
+        expect(localResult).not.toBeInstanceOf(NetworkSecurityError);
+      }
 
       // This should throw before making request
       await expect(

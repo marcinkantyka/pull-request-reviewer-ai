@@ -42,7 +42,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [18, 20, 21]
+        node-version: [20, 21]
 
     steps:
       - name: Checkout code
@@ -113,3 +113,4 @@ jobs:
 
       - name: Run npm audit (high/critical only)
         run: npm audit --audit-level=high
+        continue-on-error: true

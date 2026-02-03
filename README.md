@@ -141,13 +141,14 @@ You can create a `pr-review.config.yml` file in your project root to customize s
 
 ```yaml
 llm:
-  endpoint: 'http://localhost:11434'  # Ollama default
-  provider: 'ollama'                   # Options: ollama, vllm, llamacpp, openai-compatible
+  endpoint: 'http://localhost:11434' # Ollama default
+  provider: 'ollama' # Options: ollama, vllm, llamacpp, openai-compatible, mock
   model: 'deepseek-coder:6.7b'
   temperature: 0.2
-  timeout: 60000                        # Milliseconds
+  timeout: 60000 # Milliseconds
   maxTokens: 2048
-  apiKey: ''                           # Optional, for secured endpoints
+  apiKey: '' # Optional, for secured endpoints
+  seed: 42 # Optional, for deterministic outputs
   streaming: false
   retries: 3
   retryDelay: 1000
@@ -157,8 +158,8 @@ network:
     - 'localhost'
     - '127.0.0.1'
     - '::1'
-  strictMode: true                     # Block non-localhost connections
-  dnsBlockList: ['*']                  # Block external DNS
+  strictMode: true # Block non-localhost connections
+  dnsBlockList: ['*'] # Block external DNS
 
 review:
   maxFiles: 50
@@ -171,14 +172,16 @@ review:
     - 'dist/**'
     - 'build/**'
     - '.git/**'
-  
+  includeAllFiles: false # Set true to ignore exclude patterns and size limits
+  changeSummaryMode: deterministic # deterministic | llm
+
   # Context-aware review options
-  contextAware: true                   # Enable multi-file context review
-  groupByDirectory: true               # Group files in same directory
-  groupByFeature: true                 # Group files by feature/module
-  maxGroupSize: 5                      # Maximum files per group
-  directoryDepth: 2                    # Directory levels for grouping
-  concurrency: 3                       # Parallel review groups
+  contextAware: true # Enable multi-file context review
+  groupByDirectory: true # Group files in same directory
+  groupByFeature: true # Group files by feature/module
+  maxGroupSize: 5 # Maximum files per group
+  directoryDepth: 2 # Directory levels for grouping
+  concurrency: 3 # Parallel review groups
 
 output:
   defaultFormat: 'text'
@@ -188,7 +191,7 @@ output:
 
 git:
   diffContext: 3
-  maxDiffSize: 10485760                # 10MB
+  maxDiffSize: 10485760 # 10MB
 ```
 
 ### Environment Variables
@@ -201,6 +204,7 @@ export LLM_MODEL=deepseek-coder:6.7b
 export LLM_PROVIDER=ollama
 export LLM_API_KEY=your-key-here       # Optional
 export LLM_TIMEOUT=60000
+export LLM_SEED=42                     # Optional
 ```
 
 Run `pr-review config init` to generate a default config file with all the available options.
@@ -208,6 +212,7 @@ Run `pr-review config init` to generate a default config file with all the avail
 ## Commands
 
 Get help for any command:
+
 ```bash
 pr-review --help              # Show general help
 pr-review review --help       # Show help for review command
@@ -267,6 +272,7 @@ Common options available for both `review` and `compare` commands:
 ### Compare Command
 
 Takes two required arguments:
+
 - `<source-branch>` - Source branch to review
 - `<target-branch>` - Target branch to compare against
 
@@ -293,6 +299,7 @@ cd docker
 ```
 
 The script handles everything for you:
+
 - Downloads models if needed (only the first time)
 - Starts services with secure internal network (no internet access)
 - Blocks all outbound traffic for security
@@ -337,7 +344,7 @@ on:
 jobs:
   review:
     runs-on: ubuntu-latest
-    
+
     services:
       ollama:
         image: ollama/ollama:latest
@@ -353,7 +360,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Full history for git operations
+          fetch-depth: 0 # Full history for git operations
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -425,7 +432,7 @@ Or set it in your config file (timeout is in milliseconds):
 
 ```yaml
 llm:
-  timeout: 120000  # 2 minutes
+  timeout: 120000 # 2 minutes
 ```
 
 **Network security errors**

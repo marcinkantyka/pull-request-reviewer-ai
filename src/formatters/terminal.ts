@@ -5,14 +5,6 @@
 import type { ReviewResult, Issue } from '../types/review.js';
 import chalk from 'chalk';
 
-const SEVERITY_COLORS: Record<Issue['severity'], (text: string) => string> = {
-  critical: chalk.red.bold,
-  high: chalk.red,
-  medium: chalk.yellow,
-  low: chalk.blue,
-  info: chalk.gray,
-};
-
 const SEVERITY_ICONS: Record<Issue['severity'], string> = {
   critical: '[CRITICAL]',
   high: '[HIGH]',
@@ -21,11 +13,30 @@ const SEVERITY_ICONS: Record<Issue['severity'], string> = {
   info: '[INFO]',
 };
 
+function createNoColor(): typeof chalk {
+  const passthrough = (text: string): string => text;
+  const withBold = Object.assign(passthrough, { bold: passthrough });
+  return {
+    red: withBold,
+    yellow: withBold,
+    blue: passthrough,
+    gray: passthrough,
+    green: withBold,
+    bold: passthrough,
+    dim: passthrough,
+  } as typeof chalk;
+}
+
 export function formatTerminal(result: ReviewResult, colorize = true, showDiff = false): string {
   const lines: string[] = [];
-  const color = colorize
-    ? chalk
-    : ({ dim: (s: string): string => s, bold: (s: string): string => s } as typeof chalk);
+  const color = colorize ? chalk : createNoColor();
+  const severityColors: Record<Issue['severity'], (text: string) => string> = {
+    critical: color.red.bold,
+    high: color.red,
+    medium: color.yellow,
+    low: color.blue,
+    info: color.gray,
+  };
 
   lines.push('');
   lines.push(color.bold('═'.repeat(80)));
@@ -39,6 +50,45 @@ export function formatTerminal(result: ReviewResult, colorize = true, showDiff =
   lines.push(`  Duration:      ${result.metadata.duration}ms`);
   lines.push('');
 
+  lines.push(color.bold('  Change Summary'));
+  lines.push(color.dim('  ─'.repeat(40)));
+  lines.push(
+    `  Files Changed: ${result.changeSummary.totals.files} (added ${result.changeSummary.totals.added}, deleted ${result.changeSummary.totals.deleted}, modified ${result.changeSummary.totals.modified}, renamed ${result.changeSummary.totals.renamed})`
+  );
+  lines.push(
+    `  Lines: +${result.changeSummary.totals.additions} -${result.changeSummary.totals.deletions} (net ${result.changeSummary.totals.net})`
+  );
+  lines.push('');
+
+  lines.push('  Top Files by Churn:');
+  if (result.changeSummary.topFiles.length === 0) {
+    lines.push('    None');
+  } else {
+    for (const file of result.changeSummary.topFiles) {
+      lines.push(`    ${file.path} (${file.changeType}) +${file.additions} -${file.deletions}`);
+    }
+  }
+  lines.push('');
+
+  lines.push('  Top Directories:');
+  if (result.changeSummary.topDirectories.length === 0) {
+    lines.push('    None');
+  } else {
+    for (const directory of result.changeSummary.topDirectories) {
+      lines.push(
+        `    ${directory.path} (files ${directory.files}) +${directory.additions} -${directory.deletions}`
+      );
+    }
+  }
+  lines.push('');
+
+  lines.push('  Narrative:');
+  const narrativeLines = result.changeSummary.narrative.split('\n');
+  for (const line of narrativeLines) {
+    lines.push(`    ${line}`);
+  }
+  lines.push('');
+
   lines.push(color.bold('  Summary'));
   lines.push(color.dim('  ─'.repeat(40)));
   lines.push(`  Files Reviewed: ${result.summary.filesReviewed}`);
@@ -48,25 +98,25 @@ export function formatTerminal(result: ReviewResult, colorize = true, showDiff =
   if (result.summary.totalIssues > 0) {
     lines.push('  Issues by Severity:');
     if (result.summary.critical > 0) {
-      lines.push(`    ${SEVERITY_COLORS.critical('Critical')}: ${result.summary.critical}`);
+      lines.push(`    ${severityColors.critical('Critical')}: ${result.summary.critical}`);
     }
     if (result.summary.high > 0) {
-      lines.push(`    ${SEVERITY_COLORS.high('High')}: ${result.summary.high}`);
+      lines.push(`    ${severityColors.high('High')}: ${result.summary.high}`);
     }
     if (result.summary.medium > 0) {
-      lines.push(`    ${SEVERITY_COLORS.medium('Medium')}: ${result.summary.medium}`);
+      lines.push(`    ${severityColors.medium('Medium')}: ${result.summary.medium}`);
     }
     if (result.summary.low > 0) {
-      lines.push(`    ${SEVERITY_COLORS.low('Low')}: ${result.summary.low}`);
+      lines.push(`    ${severityColors.low('Low')}: ${result.summary.low}`);
     }
     if (result.summary.info > 0) {
-      lines.push(`    ${SEVERITY_COLORS.info('Info')}: ${result.summary.info}`);
+      lines.push(`    ${severityColors.info('Info')}: ${result.summary.info}`);
     }
     lines.push('');
   }
 
   const scoreColor =
-    result.summary.score >= 8 ? chalk.green : result.summary.score >= 6 ? chalk.yellow : chalk.red;
+    result.summary.score >= 8 ? color.green : result.summary.score >= 6 ? color.yellow : color.red;
   lines.push(`  Score: ${scoreColor.bold(`${result.summary.score}/10`)}`);
   lines.push('');
 
@@ -85,7 +135,7 @@ export function formatTerminal(result: ReviewResult, colorize = true, showDiff =
 
       for (const issue of file.issues) {
         const icon = SEVERITY_ICONS[issue.severity];
-        const severityColor = SEVERITY_COLORS[issue.severity];
+        const severityColor = severityColors[issue.severity];
         const lineInfo = issue.line > 0 ? `:${issue.line}` : '';
 
         lines.push(
