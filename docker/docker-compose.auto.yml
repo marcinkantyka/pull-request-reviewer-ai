@@ -10,7 +10,7 @@ services:
       - ollama-data:/root/.ollama:ro
     command: >
       sh -c "
-        if ! docker run --rm -v pr-reviewer_ollama-data:/root/.ollama ollama/ollama:latest ollama list 2>/dev/null | grep -q 'deepseek-coder:6.7b'; then
+        if ! docker run --rm -v pr-reviewer_ollama-data:/root/.ollama ollama/ollama:0.4.0 ollama list 2>/dev/null | grep -q 'deepseek-coder:6.7b'; then
           echo 'Model not found - running setup...'
           exit 1
         else

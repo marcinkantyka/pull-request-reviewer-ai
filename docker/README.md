@@ -24,18 +24,69 @@ The script handles everything automatically:
 - **No Data Transmission**: Your code never leaves your machine
 - **Automatic Setup**: Models downloaded securely before switching to isolated mode
 
+## Architecture
+
+The Docker setup uses a **two-container approach**:
+
+1. **Ollama service** (always running): Provides the LLM service in an isolated network
+2. **PR Review CLI** (on-demand): Runs as needed via `run-review.sh` script, mounting any git repository dynamically
+
+This approach is universal - you can review any git repository without modifying docker-compose.yml.
+
 ## Files
 
-- `docker-compose.yml` - Main secure configuration (internal network)
+- `docker-compose.yml` - Main secure configuration (internal network, Ollama only)
 - `docker-compose.setup.yml` - Temporary setup file (allows internet for model download)
 - `start.sh` - Automated startup script (use this one)
 - `setup-models.sh` - Model download script (called automatically)
+- `run-review.sh` - Universal wrapper script for running reviews on any repository
 
 ## Manual Usage
 
 ### Standard startup (after initial setup):
 ```bash
-docker-compose up
+docker-compose up -d
+```
+
+This starts only the Ollama service. The CLI tool runs on-demand using the wrapper script.
+
+### Run review commands (recommended):
+
+Use the universal wrapper script that works with any git repository:
+
+```bash
+# From any git repository directory:
+cd /path/to/your/repo
+../../pr-reviewer/docker/run-review.sh . review --base main
+
+# Or specify the repo path explicitly:
+./run-review.sh /path/to/your/repo compare feature-branch main
+
+# With custom options:
+./run-review.sh . compare feature-branch main --format json --output /output/review.json
+
+# Review current directory (default):
+./run-review.sh review --base main
+```
+
+### Alternative: Manual docker run
+
+If you prefer to use docker run directly:
+
+```bash
+# Build the image first (one time)
+docker-compose build pr-review
+
+# Run review for any repository
+docker run --rm -it \
+    --network pr-reviewer_pr-review-network \
+    -v /path/to/your/repo:/workspace:ro \
+    -v $(pwd)/docker/output:/output \
+    -e LLM_ENDPOINT=http://ollama:11434 \
+    -e LLM_MODEL=deepseek-coder:6.7b \
+    -w /workspace \
+    pr-reviewer-pr-review:${VERSION} \
+    node dist/cli/index.js compare feature-branch main
 ```
 
 ### Download models manually (if start.sh fails):
@@ -70,6 +121,7 @@ The model is stored in a Docker volume (`ollama-data`), so it persists across re
 - After initial setup, the network is always internal (no internet)
 - If you need to update models, run `./setup-models.sh` again
 - The `pr-review` container has additional security: `dns: []` and dropped capabilities
+- **Version Management**: Image version is automatically read from `package.json` - see [VERSION.md](VERSION.md) for details
 
 ## Troubleshooting
 
