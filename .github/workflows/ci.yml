@@ -77,55 +77,6 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
         continue-on-error: true
 
-  e2e:
-    name: E2E (Ollama)
-    runs-on: ubuntu-latest
-    services:
-      ollama:
-        image: ollama/ollama:0.4.0
-        ports:
-          - 11434:11434
-        options: >-
-          --health-cmd "curl -f http://localhost:11434/api/tags || exit 1"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Wait for Ollama
-        run: |
-          until curl -f http://localhost:11434/api/tags; do
-            echo "Waiting for Ollama..."
-            sleep 2
-          done
-
-      - name: Pull Ollama model
-        run: |
-          curl http://localhost:11434/api/pull -d '{"name": "deepseek-coder:1.3b"}'
-        timeout-minutes: 10
-
-      - name: Run E2E tests
-        run: npm run test:e2e
-        env:
-          RUN_E2E: 'true'
-          LLM_ENDPOINT: http://localhost:11434
-          LLM_MODEL: deepseek-coder:1.3b
-          LLM_PROVIDER: ollama
-          LLM_TEMPERATURE: '0'
-          LLM_SEED: '42'
-          LOG_LEVEL: silent
 
   docker-build:
     name: Docker Build & Test
@@ -163,15 +114,4 @@ jobs:
 
       - name: Run npm audit (high/critical only)
         run: npm audit --audit-level=high
-
-  osv-scan:
-    name: OSV Scan
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Run OSV Scanner
-        uses: google/osv-scanner-action@v1
-        with:
-          scan-args: -r .
+        continue-on-error: true

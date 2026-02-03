@@ -13,7 +13,7 @@ const SEVERITY_ICONS: Record<Issue['severity'], string> = {
   info: '[INFO]',
 };
 
-function createNoColor() {
+function createNoColor(): typeof chalk {
   const passthrough = (text: string): string => text;
   const withBold = Object.assign(passthrough, { bold: passthrough });
   return {

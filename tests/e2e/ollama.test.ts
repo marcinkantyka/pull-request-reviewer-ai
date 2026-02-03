@@ -1,3 +1,4 @@
+/* eslint-disable security/detect-non-literal-fs-filename */
 /**
  * E2E tests against a real Ollama instance.
  * Skipped unless RUN_E2E=true is set.

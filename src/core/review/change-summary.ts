@@ -74,7 +74,21 @@ function buildTotals(diffs: DiffInfo[]): ChangeSummaryTotals {
 
   for (const diff of diffs) {
     const changeType = resolveChangeType(diff);
-    totals[changeType]++;
+    switch (changeType) {
+      case 'added':
+        totals.added += 1;
+        break;
+      case 'deleted':
+        totals.deleted += 1;
+        break;
+      case 'renamed':
+        totals.renamed += 1;
+        break;
+      case 'modified':
+      default:
+        totals.modified += 1;
+        break;
+    }
     totals.additions += diff.additions;
     totals.deletions += diff.deletions;
   }

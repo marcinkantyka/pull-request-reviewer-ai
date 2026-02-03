@@ -4,7 +4,7 @@
 
 import type { GitDiff } from './types.js';
 
-const DIFF_GIT_REGEX = /^diff --git (\"a\/.*?\"|a\/\S+) (\"b\/.*?\"|b\/\S+)$/;
+const DIFF_GIT_REGEX = /^diff --git ("a\/.*?"|a\/\S+) ("b\/.*?"|b\/\S+)$/;
 
 function stripDiffPrefix(raw: string, prefix: 'a/' | 'b/'): string {
   let value = raw.trim();
