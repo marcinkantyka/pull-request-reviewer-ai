@@ -2,6 +2,9 @@
 
 [![CI](https://github.com/marcinkantyka/pull-request-reviewer-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/marcinkantyka/pull-request-reviewer-ai/actions/workflows/ci.yml)
 [![Release](https://github.com/marcinkantyka/pull-request-reviewer-ai/actions/workflows/release.yml/badge.svg)](https://github.com/marcinkantyka/pull-request-reviewer-ai/actions/workflows/release.yml)
+[![npm](https://img.shields.io/npm/v/pull-request-reviewer-ai?label=npm)](https://www.npmjs.com/package/pull-request-reviewer-ai)
+[![Docker](https://img.shields.io/docker/v/marcinkantyka/pull-request-reviewer-ai?label=docker)](https://hub.docker.com/r/marcinkantyka/pull-request-reviewer-ai)
+[![License](https://img.shields.io/github/license/marcinkantyka/pull-request-reviewer-ai)](https://github.com/marcinkantyka/pull-request-reviewer-ai/blob/main/LICENSE)
 
 > **Offline-first Pull Request review CLI tool using local LLM**
 
@@ -418,6 +421,46 @@ jobs:
         env:
           LLM_ENDPOINT: http://localhost:11434
           LLM_MODEL: deepseek-coder:1.3b
+
+#### Minimal offline-safe example
+
+This version explicitly restricts outbound connections to the local Ollama service.
+
+```yaml
+name: Offline-Safe Review
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+
+    services:
+      ollama:
+        image: ollama/ollama:latest
+        ports:
+          - 11434:11434
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - run: npm install -g pull-request-reviewer-ai
+
+      - run: pr-review compare ${{ github.head_ref }} ${{ github.base_ref }} --format md
+        env:
+          LLM_ENDPOINT: http://localhost:11434
+          LLM_MODEL: deepseek-coder:1.3b
+          NETWORK_ALLOWED_HOSTS: localhost,127.0.0.1,::1
+```
           LLM_PROVIDER: ollama
         continue-on-error: true
 
