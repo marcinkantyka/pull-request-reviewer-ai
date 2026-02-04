@@ -108,7 +108,7 @@ When reporting security issues, please:
 
 Security updates will be:
 
-- Released as patch versions (e.g., 1.0.0 → 1.0.1)
+- Released as patch versions (e.g., 1.1.0 → 1.1.1)
 - Documented in release notes
 - Tagged with security labels on GitHub
 - Announced via GitHub security advisories for critical issues

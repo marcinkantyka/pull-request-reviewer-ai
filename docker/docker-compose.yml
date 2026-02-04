@@ -26,7 +26,7 @@ services:
       dockerfile: docker/Dockerfile
     # Image version is set from PR_REVIEW_VERSION environment variable
     # Automatically reads from package.json via start.sh script
-    image: pr-reviewer-pr-review:${PR_REVIEW_VERSION:-1.0.0}
+    image: pr-reviewer-pr-review:${PR_REVIEW_VERSION:-1.1.0}
     # This service is built but not started by default
     # Use run-review.sh script or docker run to execute commands
     profiles:

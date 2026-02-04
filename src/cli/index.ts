@@ -20,7 +20,7 @@ const __dirname = dirname(__filename);
  * Returns default version if file is missing or invalid
  */
 function readPackageVersion(): string {
-  const defaultVersion = '1.0.0';
+  const defaultVersion = '1.1.0';
   const packagePath = resolve(__dirname, '../../package.json');
 
   try {

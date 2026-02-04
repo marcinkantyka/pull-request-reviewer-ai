@@ -123,7 +123,7 @@ Here's what a typical review looks like:
   File: src/cli/index.ts (typescript) +17 -1
 
     [MEDIUM] [maintainability]:17
-       The version is hardcoded and falls back to '1.0.0' if the package.json cannot be read.
+       The version is hardcoded and falls back to '1.1.0' if the package.json cannot be read.
        Suggestion: Consider using a default value or log an error message when the version cannot be determined.
 
 ════════════════════════════════════════════════════════════════════════════════
