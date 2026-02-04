@@ -137,19 +137,31 @@ The report includes:
 
 ## Configuration
 
-You can create a `pr-review.config.yml` file in your project root to customize settings:
+This tool reads configuration from (in order):
+1. CLI flag `--config /path/to/config.yml`
+2. Project root config files: `pr-review.config.yml` / `.pr-reviewrc.yml` / `pr-review.config.json` / `package.json` (`pr-review` key)
+3. Environment variables (override file values)
+
+### Quick Start (Deterministic + Offline-Safe)
+
+To make runs repeatable and keep everything local:
+- Set `temperature: 0`
+- Set `seed` to a fixed number
+- Use `changeSummaryMode: deterministic`
+- Keep `NETWORK_ALLOWED_HOSTS` to localhost or internal Docker hostnames
+
+Example `pr-review.config.yml`:
 
 ```yaml
 llm:
   endpoint: 'http://localhost:11434' # Ollama default
   provider: 'ollama' # Options: ollama, vllm, llamacpp, openai-compatible, mock
   model: 'deepseek-coder:6.7b'
-  temperature: 0.2
+  temperature: 0
   timeout: 60000 # Milliseconds
   maxTokens: 2048
   apiKey: '' # Optional, for secured endpoints
-  seed: 42 # Optional, for deterministic outputs
-  streaming: false
+  seed: 42 # Deterministic outputs
   retries: 3
   retryDelay: 1000
 
@@ -158,8 +170,6 @@ network:
     - 'localhost'
     - '127.0.0.1'
     - '::1'
-  strictMode: true # Block non-localhost connections
-  dnsBlockList: ['*'] # Block external DNS
 
 review:
   maxFiles: 50
@@ -187,7 +197,6 @@ output:
   defaultFormat: 'text'
   colorize: true
   showDiff: false
-  groupByFile: true
 
 git:
   diffContext: 3
@@ -209,6 +218,22 @@ export NETWORK_ALLOWED_HOSTS=ollama,localhost,127.0.0.1,::1
 ```
 
 Run `pr-review config init` to generate a default config file with all the available options.
+
+### Common Configuration Tasks
+
+Set deterministic output:
+- `llm.temperature: 0`
+- `llm.seed: <fixed number>`
+- `review.changeSummaryMode: deterministic`
+
+Review every file (ignore filters):
+- `review.includeAllFiles: true`
+
+Use a different config file:
+- `pr-review review --config /path/to/config.yml --base main`
+
+Allow internal Docker hostnames:
+- Add hostnames to `network.allowedHosts` or set `NETWORK_ALLOWED_HOSTS`
 
 ## Commands
 

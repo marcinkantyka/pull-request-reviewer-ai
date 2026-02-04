@@ -14,15 +14,12 @@ export interface LLMConfig {
   maxTokens?: number;
   apiKey?: string;
   seed?: number;
-  streaming?: boolean;
   retries?: number;
   retryDelay?: number;
 }
 
 export interface NetworkConfig {
   allowedHosts: string[];
-  strictMode: boolean;
-  dnsBlockList?: string[];
 }
 
 export interface ReviewConfig {
@@ -89,7 +86,6 @@ export interface OutputConfig {
   defaultFormat: 'text' | 'json' | 'md';
   colorize: boolean;
   showDiff: boolean;
-  groupByFile: boolean;
 }
 
 export interface GitConfig {

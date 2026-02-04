@@ -35,7 +35,6 @@ RUN mkdir -p /home/prreview/.config/pr-review && \
 USER prreview
 
 ENV NODE_NO_WARNINGS=1
-ENV NETWORK_STRICT_MODE=true
 
 ENTRYPOINT ["node", "dist/cli/index.js"]
 CMD ["--help"]

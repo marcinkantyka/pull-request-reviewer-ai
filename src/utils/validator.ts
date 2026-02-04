@@ -15,15 +15,12 @@ export const LLMConfigSchema = z.object({
   maxTokens: z.number().positive().optional(),
   apiKey: z.string().optional(),
   seed: z.number().int().min(0).optional(),
-  streaming: z.boolean().optional(),
   retries: z.number().min(0).max(10).optional(),
   retryDelay: z.number().positive().optional(),
 });
 
 export const NetworkConfigSchema = z.object({
   allowedHosts: z.array(z.string()).min(1),
-  strictMode: z.boolean().default(true),
-  dnsBlockList: z.array(z.string()).optional(),
 });
 
 export const ReviewConfigSchema = z.object({
@@ -48,7 +45,6 @@ export const OutputConfigSchema = z.object({
   defaultFormat: z.enum(['text', 'json', 'md']),
   colorize: z.boolean(),
   showDiff: z.boolean(),
-  groupByFile: z.boolean(),
 });
 
 export const GitConfigSchema = z.object({

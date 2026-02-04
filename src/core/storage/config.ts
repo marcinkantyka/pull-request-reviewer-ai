@@ -21,14 +21,11 @@ export const DEFAULT_CONFIG: AppConfig = {
     maxTokens: parseInt(process.env.LLM_MAX_TOKENS || '2048', 10),
     apiKey: process.env.LLM_API_KEY,
     seed: process.env.LLM_SEED ? parseInt(process.env.LLM_SEED, 10) : undefined,
-    streaming: false,
     retries: 3,
     retryDelay: 1000,
   },
   network: {
     allowedHosts: ['localhost', '127.0.0.1', '::1'],
-    strictMode: process.env.NETWORK_STRICT_MODE === 'true',
-    dnsBlockList: ['*'],
   },
   review: {
     maxFiles: 50,
@@ -64,7 +61,6 @@ export const DEFAULT_CONFIG: AppConfig = {
     defaultFormat: 'text',
     colorize: true,
     showDiff: false,
-    groupByFile: true,
   },
   git: {
     diffContext: 3,
