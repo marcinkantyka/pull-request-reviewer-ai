@@ -78,7 +78,7 @@ docker run --rm -it \
     -v "$SCRIPT_DIR/output:/output" \
     -e LLM_ENDPOINT=http://ollama:11434 \
     -e LLM_MODEL=deepseek-coder:6.7b \
-    -e NETWORK_STRICT_MODE=true \
+    -e NETWORK_ALLOWED_HOSTS=ollama,localhost,127.0.0.1,::1 \
     -w /workspace \
     pr-reviewer-pr-review:${VERSION} \
     node dist/cli/index.js "$@"

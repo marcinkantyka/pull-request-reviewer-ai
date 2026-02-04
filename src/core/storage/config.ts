@@ -27,8 +27,6 @@ export const DEFAULT_CONFIG: AppConfig = {
   },
   network: {
     allowedHosts: ['localhost', '127.0.0.1', '::1'],
-    strictMode: process.env.NETWORK_STRICT_MODE === 'true',
-    dnsBlockList: ['*'],
   },
   review: {
     maxFiles: 50,
@@ -64,7 +62,6 @@ export const DEFAULT_CONFIG: AppConfig = {
     defaultFormat: 'text',
     colorize: true,
     showDiff: false,
-    groupByFile: true,
   },
   git: {
     diffContext: 3,

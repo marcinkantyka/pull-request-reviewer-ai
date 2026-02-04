@@ -71,6 +71,35 @@ cd /path/to/your/repo
 ./run-review.sh review --base main
 ```
 
+### Configuration (Docker)
+
+You can pass configuration to the container via:
+- Mounting a config file (`/config/config.yml`) and setting `--config /config/config.yml`
+- Environment variables (`LLM_*`, `NETWORK_*`, `REVIEW_*`)
+
+Recommended deterministic + offline-safe settings:
+- `LLM_TEMPERATURE=0`
+- `LLM_SEED=42`
+- `NETWORK_ALLOWED_HOSTS=ollama,localhost,127.0.0.1,::1`
+- Set `review.changeSummaryMode: deterministic` in your config file
+
+Example (manual run):
+
+```bash
+docker run --rm -it \
+  --network pr-reviewer_pr-review-network \
+  -v /path/to/your/repo:/workspace:ro \
+  -v $(pwd)/output:/output \
+  -e LLM_ENDPOINT=http://ollama:11434 \
+  -e LLM_MODEL=deepseek-coder:6.7b \
+  -e LLM_TEMPERATURE=0 \
+  -e LLM_SEED=42 \
+  -e NETWORK_ALLOWED_HOSTS=ollama,localhost,127.0.0.1,::1 \
+  -w /workspace \
+  pr-reviewer-pr-review:${VERSION} \
+  node dist/cli/index.js review --base main --format json --output /output/review.json
+```
+
 ### Alternative: Manual docker run
 
 If you prefer to use docker run directly:
@@ -125,7 +154,6 @@ The model is stored in a Docker volume (`ollama-data`), so it persists across re
 - Models are downloaded once and stored in a Docker volume
 - After initial setup, the network is always internal (no internet)
 - If you need to update models, run `./setup-models.sh` again
-- The `pr-review` container has additional security: `dns: []` and dropped capabilities
 - **Version Management**: Image version is automatically read from `package.json` - see [VERSION.md](VERSION.md) for details
 
 ## Troubleshooting
