@@ -21,11 +21,11 @@ cd "$SCRIPT_DIR"
 
 # Get version from package.json (single source of truth)
 if command -v node >/dev/null 2>&1; then
-    VERSION=$(node -p "require('../package.json').version" 2>/dev/null || echo "1.0.0")
+    VERSION=$(node -p "require('../package.json').version" 2>/dev/null || echo "1.1.0")
 elif command -v jq >/dev/null 2>&1; then
-    VERSION=$(jq -r '.version' ../package.json 2>/dev/null || echo "1.0.0")
+    VERSION=$(jq -r '.version' ../package.json 2>/dev/null || echo "1.1.0")
 else
-    VERSION="1.0.0"
+    VERSION="1.1.0"
 fi
 
 # Get network name from docker-compose
@@ -81,4 +81,4 @@ docker run --rm -it \
     -e NETWORK_ALLOWED_HOSTS=ollama,localhost,127.0.0.1,::1 \
     -w /workspace \
     pr-reviewer-pr-review:${VERSION} \
-    node dist/cli/index.js "$@"
+    "$@"

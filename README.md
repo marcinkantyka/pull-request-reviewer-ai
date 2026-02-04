@@ -123,7 +123,7 @@ Here's what a typical review looks like:
   File: src/cli/index.ts (typescript) +17 -1
 
     [MEDIUM] [maintainability]:17
-       The version is hardcoded and falls back to '1.0.0' if the package.json cannot be read.
+       The version is hardcoded and falls back to '1.1.0' if the package.json cannot be read.
        Suggestion: Consider using a default value or log an error message when the version cannot be determined.
 
 ════════════════════════════════════════════════════════════════════════════════
@@ -139,7 +139,7 @@ The report includes:
 
 This tool reads configuration from (in order):
 1. CLI flag `--config /path/to/config.yml`
-2. Project root config files: `pr-review.config.yml` / `.pr-reviewrc.yml` / `pr-review.config.json` / `package.json` (`pr-review` key)
+2. Project root config files: `pr-review.config.json` / `pr-review.config.yaml` / `pr-review.config.yml` / `pr-review.config.js` / `pr-review.config.ts` / `.pr-reviewrc` / `.pr-reviewrc.json` / `.pr-reviewrc.yaml` / `.pr-reviewrc.yml` / `package.json` (`pr-review` key)
 3. Environment variables (override file values)
 
 ### Quick Start (Deterministic + Offline-Safe)
