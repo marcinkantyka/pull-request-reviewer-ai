@@ -21,7 +21,6 @@ export const DEFAULT_CONFIG: AppConfig = {
     maxTokens: parseInt(process.env.LLM_MAX_TOKENS || '2048', 10),
     apiKey: process.env.LLM_API_KEY,
     seed: process.env.LLM_SEED ? parseInt(process.env.LLM_SEED, 10) : undefined,
-    streaming: false,
     retries: 3,
     retryDelay: 1000,
   },
