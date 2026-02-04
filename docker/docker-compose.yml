@@ -31,6 +31,16 @@ services:
     # Use run-review.sh script or docker run to execute commands
     profiles:
       - manual
+    volumes:
+      - ${REPO_PATH:?Set REPO_PATH to the target git repo}:/workspace:ro
+      - ./output:/output
+    environment:
+      - LLM_PROVIDER=ollama
+      - LLM_ENDPOINT=http://ollama:11434
+      - LLM_MODEL=deepseek-coder:6.7b
+      - NETWORK_ALLOWED_HOSTS=ollama,localhost,127.0.0.1,::1
+      - NETWORK_STRICT_MODE=true
+    working_dir: /workspace
 
 networks:
   pr-review-network:

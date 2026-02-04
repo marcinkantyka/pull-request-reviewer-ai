@@ -214,7 +214,6 @@ export LLM_PROVIDER=ollama
 export LLM_API_KEY=your-key-here       # Optional
 export LLM_TIMEOUT=60000
 export LLM_SEED=42                     # Optional
-export LLM_TEMPERATURE=0               # Deterministic outputs
 export NETWORK_ALLOWED_HOSTS=ollama,localhost,127.0.0.1,::1
 ```
 

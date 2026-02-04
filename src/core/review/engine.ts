@@ -18,7 +18,7 @@ export class ReviewEngine {
   private analyzer: ReviewAnalyzer;
 
   constructor(private readonly config: AppConfig) {
-    const provider = createLLMProvider(config.llm);
+    const provider = createLLMProvider(config.llm, config.network.allowedHosts);
     this.llmClient = new LLMClient(
       provider,
       config.llm.timeout,
