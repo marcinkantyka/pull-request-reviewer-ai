@@ -48,6 +48,8 @@ This approach is universal - you can review any git repository without modifying
 
 ```bash
 docker-compose up -d
+# or
+docker compose up -d
 ```
 
 This starts only the Ollama service. The CLI tool runs on-demand using the wrapper script.
@@ -107,6 +109,8 @@ If you prefer to use docker run directly:
 ```bash
 # Build the image first (one time)
 docker-compose build pr-review
+# or
+docker compose build pr-review
 
 # Run review for any repository
 docker run --rm -it \
@@ -115,6 +119,7 @@ docker run --rm -it \
     -v $(pwd)/docker/output:/output \
     -e LLM_ENDPOINT=http://ollama:11434 \
     -e LLM_MODEL=deepseek-coder:6.7b \
+    -e NETWORK_ALLOWED_HOSTS=ollama,localhost,127.0.0.1,::1 \
     -w /workspace \
     pr-reviewer-pr-review:${VERSION} \
     node dist/cli/index.js compare feature-branch main
