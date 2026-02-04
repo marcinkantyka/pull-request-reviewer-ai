@@ -81,4 +81,4 @@ docker run --rm -it \
     -e NETWORK_ALLOWED_HOSTS=ollama,localhost,127.0.0.1,::1 \
     -w /workspace \
     pr-reviewer-pr-review:${VERSION} \
-    node dist/cli/index.js "$@"
+    "$@"
