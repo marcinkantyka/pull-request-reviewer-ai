@@ -54,6 +54,16 @@ docker compose up -d
 
 This starts only the Ollama service. The CLI tool runs on-demand using the wrapper script.
 
+If you want to run the `pr-review` service via docker-compose, set `REPO_PATH` to the target git repo:
+
+```bash
+REPO_PATH=/path/to/your/repo docker-compose up pr-review
+# or
+REPO_PATH=/path/to/your/repo docker compose up pr-review
+```
+
+This mounts the repo read-only at `/workspace` and writes outputs to `docker/output`.
+
 ### Run review commands (recommended):
 
 Use the universal wrapper script that works with any git repository:
