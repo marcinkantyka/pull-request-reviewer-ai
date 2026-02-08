@@ -45,6 +45,15 @@ export interface ReviewMetadata {
   targetBranch: string;
   llmModel: string;
   duration: number; // milliseconds
+  warnings?: ReviewWarning[];
+}
+
+export interface ReviewWarning {
+  code: string;
+  message: string;
+  details?: unknown;
+  filePath?: string;
+  groupType?: string;
 }
 
 export type ChangeType = 'added' | 'deleted' | 'modified' | 'renamed';

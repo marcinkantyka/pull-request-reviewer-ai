@@ -52,6 +52,16 @@ pr-review --server
 
 Default port is `47831`. If that port is busy, the server falls back to a random free port. You can force a random port with `--port 0`.
 
+### UI Quickstart
+
+1. Run `pr-review --server` and open the URL printed in the console.
+2. Pick your repository path (or use the current directory).
+3. Choose a base branch (default is `main`).
+4. (Optional) Load models and pick an LLM model.
+5. Click **Run Review** to generate results.
+
+Tip: Use **Advanced** to set project-specific context and other overrides for a single run.
+
 ## Configuration (optional)
 
 The tool works with defaults, but you can customize it:
@@ -70,6 +80,26 @@ export LLM_PROVIDER=ollama
 ```
 
 This creates a `pr-review.config.yml` file with all available configuration options. See [README.md](README.md) for full configuration details.
+In UI mode, you can also generate the config template from the Advanced panel.
+
+### Project Context (Recommended)
+
+Use `review.projectContext` (or `REVIEW_PROJECT_CONTEXT`) to inject project-specific rules and reduce false positives.
+
+Example:
+
+```yaml
+review:
+  projectContext: >
+    Do not flag exposed ports as security issues; the service is private behind an ALB.
+    Authentication is handled by the gateway, not in this repo.
+```
+
+Or with environment variables:
+
+```bash
+export REVIEW_PROJECT_CONTEXT="Do not flag exposed ports as security issues; the service is private behind an ALB."
+```
 
 ## Troubleshooting
 

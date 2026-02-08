@@ -16,7 +16,7 @@ PR Review CLI is a privacy-focused code review tool that leverages local LLMs to
 
 ### Key Features
 
-- **100% Offline**: All analysis happens locally—no data transmission to external services
+- **Offline-first**: All analysis happens locally by default—no data transmission to external services
 - **AI-Powered Reviews**: Uses local LLMs (Ollama, vLLM, llama.cpp) for intelligent code analysis
 - **Detailed Reports**: Generates comprehensive reviews with severity levels, categories, and actionable suggestions
 - **Flexible Configuration**: Customize LLM settings, review parameters, and output formats
@@ -27,6 +27,20 @@ PR Review CLI is a privacy-focused code review tool that leverages local LLMs to
 ### What it does
 
 Reviews code changes between git branches using a local LLM. It analyzes diffs, finds potential issues (bugs, security vulnerabilities, code quality issues), and provides structured feedback in a format you can use in CI/CD or locally.
+
+## Contents
+
+- Installation
+- Quick start
+- Configuration
+- Commands
+- Local UI (optional)
+- LLM providers
+- Docker
+- CI/CD
+- Security
+- Troubleshooting
+- Development
 
 ## Installation
 
@@ -161,6 +175,7 @@ llm:
   provider: 'ollama' # Options: ollama, vllm, llamacpp, openai-compatible, mock
   model: 'deepseek-coder:6.7b'
   temperature: 0
+  topP: 1
   timeout: 60000 # Milliseconds
   maxTokens: 2048
   apiKey: '' # Optional, for secured endpoints
@@ -187,6 +202,7 @@ review:
     - '.git/**'
   includeAllFiles: false # Set true to ignore exclude patterns and size limits
   changeSummaryMode: deterministic # deterministic | llm
+  projectContext: '' # Optional: domain rules or architecture notes to guide reviews
 
   # Context-aware review options
   contextAware: true # Enable multi-file context review
@@ -221,6 +237,9 @@ export LLM_PROVIDER=ollama
 export LLM_API_KEY=your-key-here       # Optional
 export LLM_TIMEOUT=60000
 export LLM_SEED=42                     # Optional
+export LLM_TOP_P=1
+export LLM_MAX_TOKENS=2048
+export REVIEW_PROJECT_CONTEXT="Explain domain constraints or key rules"
 export NETWORK_ALLOWED_HOSTS=ollama,localhost,127.0.0.1,::1
 export UI_HOST=127.0.0.1
 export UI_PORT=47831
@@ -228,11 +247,31 @@ export UI_PORT=47831
 
 Run `pr-review config init` to generate a default config file with all the available options.
 
+### Project Context (Recommended)
+
+`review.projectContext` (or `REVIEW_PROJECT_CONTEXT`) lets you inject short, project-specific rules that the model must respect. This reduces false positives and aligns findings with how your system really works.
+
+Use it to document architecture constraints, infrastructure protections, or known tradeoffs. Example:
+
+```yaml
+review:
+  projectContext: >
+    Do not flag exposed ports as security issues; the service is private behind an ALB.
+    Authentication is handled by the gateway, not in this repo.
+```
+
+Or with environment variables:
+
+```bash
+export REVIEW_PROJECT_CONTEXT="Do not flag exposed ports as security issues; the service is private behind an ALB."
+```
+
 ### Common Configuration Tasks
 
 Set deterministic output:
 - `llm.temperature: 0`
 - `llm.seed: <fixed number>`
+- `llm.topP: 1`
 - `review.changeSummaryMode: deterministic`
 
 Review every file (ignore filters):
@@ -290,7 +329,7 @@ Global options:
 
 - `--server` - Start the local UI server
 - `--host <host>` - UI server host (default: 127.0.0.1)
-- `--port <port>` - UI server port (default: 0 for random free port)
+- `--port <port>` - UI server port (default: 47831; set 0 for random)
 
 Common options available for both `review` and `compare` commands:
 
@@ -330,7 +369,18 @@ Default port is `47831`. If that port is busy, the server falls back to a random
 In UI mode, only JSON/YAML config files are accepted.
 
 The UI compares committed branch diffs. Uncommitted working tree changes are not included.
-If you use Ollama, the UI can load available models from `/api/tags`.
+If you use Ollama or another local provider, the UI can load available models and detect local servers automatically.
+You can also generate a full `pr-review.config.yml` template from the UI (Advanced panel).
+
+### UI Quickstart
+
+1. Run `pr-review --server` and open the URL printed in the console.
+2. Pick your repository path (or use the current directory).
+3. Choose a base branch (default is `main`).
+4. (Optional) Load models and pick an LLM model.
+5. Click **Run Review** to generate results.
+
+Tip: Use **Advanced** to set project-specific context and other overrides for a single run.
 
 ## LLM providers
 
@@ -339,9 +389,9 @@ Works with any OpenAI-compatible API. Tested with:
 - **Ollama** (recommended) - `http://localhost:11434`
 - **vLLM** - `http://localhost:8000`
 - **llama.cpp server** - `http://localhost:8080`
-- **LM Studio / LocalAI** - `http://localhost:1234/v1`
+- **LM Studio / LocalAI** - `http://localhost:1234`
 
-Set the `provider` and `endpoint` in your config or via environment variables.
+Set the `provider` and `endpoint` in your config or via environment variables. For OpenAI-compatible servers, use the base URL (the tool will call `/v1/models` and `/v1/chat/completions`).
 
 ## Docker
 
@@ -380,6 +430,8 @@ For a complete setup with Ollama and secure network isolation:
 ```bash
 cd docker
 docker-compose up
+# or
+docker compose up
 ```
 
 The compose setup uses `internal: true` network mode, which completely blocks internet access from containers. Models are automatically downloaded on first run via `start.sh`. Check out `docker/README.md` for more details.
@@ -493,7 +545,9 @@ For a more complete example with PR comments, see `examples/ci-integration.yml`.
 
 ## Security
 
-The tool only allows connections to localhost. If you try to connect to an external host, it will be blocked. Everything runs locally on your machine—your code never leaves your computer.
+The tool only allows connections to localhost by default. If you try to connect to an external host, it will be blocked unless you explicitly allow it in `NETWORK_ALLOWED_HOSTS`. Everything runs locally on your machine—your code never leaves your computer unless you configure a non-local endpoint.
+
+The local UI server only accepts loopback connections, even if you bind to `0.0.0.0`.
 
 The local UI server only accepts loopback connections. Remote network requests are blocked even if you bind to `0.0.0.0`.
 

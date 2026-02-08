@@ -3,7 +3,7 @@ import { URL } from 'node:url';
 import { minimatch } from 'minimatch';
 import path from 'node:path';
 import fs from 'node:fs/promises';
-import { loadConfig } from '../core/storage/config.js';
+import { DEFAULT_CONFIG, loadConfig } from '../core/storage/config.js';
 import { GitRepositoryManager } from '../core/git/repo.js';
 import { ReviewEngine } from '../core/review/engine.js';
 import { logger } from '../utils/logger.js';
@@ -44,11 +44,54 @@ interface ReviewRequest {
     model?: string;
     provider?: AppConfig['llm']['provider'];
     temperature?: number;
+    topP?: number;
     seed?: number;
+    maxTokens?: number;
+    apiKey?: string;
+    retries?: number;
+    retryDelay?: number;
   };
   network?: {
     allowedHosts?: string[];
   };
+  review?: {
+    maxFiles?: number;
+    maxLinesPerFile?: number;
+    excludePatterns?: string[];
+    severityLevels?: AppConfig['review']['severityLevels'];
+    categories?: AppConfig['review']['categories'];
+    projectContext?: string;
+    includeAllFiles?: boolean;
+    changeSummaryMode?: AppConfig['review']['changeSummaryMode'];
+    contextAware?: boolean;
+    groupByDirectory?: boolean;
+    groupByFeature?: boolean;
+    maxGroupSize?: number;
+    directoryDepth?: number;
+    concurrency?: number;
+  };
+  output?: {
+    defaultFormat?: AppConfig['output']['defaultFormat'];
+    colorize?: boolean;
+    showDiff?: boolean;
+  };
+  git?: {
+    diffContext?: number;
+    maxDiffSize?: number;
+  };
+}
+
+interface ConfigTemplateRequest {
+  repoPath?: string;
+  outputPath?: string;
+}
+
+interface ProviderInfo {
+  name: string;
+  provider: AppConfig['llm']['provider'];
+  endpoint: string;
+  models?: string[];
+  note?: string;
 }
 
 const BODY_LIMIT = 1_000_000;
@@ -62,6 +105,16 @@ function isLoopbackAddress(address?: string): boolean {
     return true;
   }
   return address.startsWith('::ffff:127.0.0.1');
+}
+
+function formatError(error: unknown): { message: string; code?: string; details?: unknown } {
+  if (error instanceof PRReviewError) {
+    return { message: error.message, code: error.code, details: error.details };
+  }
+  if (error instanceof Error) {
+    return { message: error.message, code: 'UNKNOWN_ERROR' };
+  }
+  return { message: String(error), code: 'UNKNOWN_ERROR' };
 }
 
 function sendJson(res: ServerResponse, status: number, payload: unknown): void {
@@ -95,13 +148,14 @@ async function readJsonBody(req: IncomingMessage): Promise<ReviewRequest> {
 }
 
 function sanitizeConfig(config: AppConfig) {
-  const { llm, network, review } = config;
+  const { llm, network, review, output, git, server } = config;
   return {
     llm: {
       endpoint: llm.endpoint,
       provider: llm.provider,
       model: llm.model,
       temperature: llm.temperature,
+      topP: llm.topP,
       timeout: llm.timeout,
       maxTokens: llm.maxTokens,
       seed: llm.seed,
@@ -115,8 +169,258 @@ function sanitizeConfig(config: AppConfig) {
       maxFiles: review.maxFiles,
       includeAllFiles: review.includeAllFiles,
       maxLinesPerFile: review.maxLinesPerFile,
+      excludePatterns: review.excludePatterns,
+      severityLevels: review.severityLevels,
+      categories: review.categories,
+      projectContext: review.projectContext,
+      changeSummaryMode: review.changeSummaryMode,
+      contextAware: review.contextAware,
+      groupByDirectory: review.groupByDirectory,
+      groupByFeature: review.groupByFeature,
+      maxGroupSize: review.maxGroupSize,
+      directoryDepth: review.directoryDepth,
+      concurrency: review.concurrency,
+    },
+    output: {
+      defaultFormat: output.defaultFormat,
+      colorize: output.colorize,
+      showDiff: output.showDiff,
+    },
+    git: {
+      diffContext: git.diffContext,
+      maxDiffSize: git.maxDiffSize,
+    },
+    server: {
+      host: server?.host,
+      port: server?.port,
     },
   };
+}
+
+function yamlString(value: string): string {
+  return JSON.stringify(value);
+}
+
+function renderYamlList(items: string[], indent: string): string[] {
+  return items.map((item) => `${indent}- ${yamlString(item)}`);
+}
+
+function buildConfigTemplate(config: AppConfig): string {
+  const llm = config.llm;
+  const review = config.review;
+  const output = config.output;
+  const git = config.git;
+  const network = config.network;
+  const server = config.server || DEFAULT_CONFIG.server;
+
+  const lines = [
+    '# PR Review CLI configuration',
+    '# Save as pr-review.config.yml in your repository root.',
+    '',
+    'llm:',
+    `  endpoint: ${yamlString(llm.endpoint)}`,
+    `  provider: ${yamlString(llm.provider)}`,
+    `  model: ${yamlString(llm.model)}`,
+    `  temperature: ${llm.temperature}`,
+    `  topP: ${llm.topP ?? 1}`,
+    `  timeout: ${llm.timeout}`,
+    `  maxTokens: ${llm.maxTokens ?? 2048}`,
+    `  apiKey: ${llm.apiKey ? yamlString(llm.apiKey) : '""'}`,
+    `  seed: ${llm.seed ?? 0}`,
+    `  retries: ${llm.retries ?? 3}`,
+    `  retryDelay: ${llm.retryDelay ?? 1000}`,
+    '',
+    'network:',
+    '  allowedHosts:',
+    ...renderYamlList(network.allowedHosts || [], '    '),
+    '',
+    'review:',
+    `  maxFiles: ${review.maxFiles}`,
+    `  maxLinesPerFile: ${review.maxLinesPerFile}`,
+    '  excludePatterns:',
+    ...renderYamlList(review.excludePatterns || [], '    '),
+    '  severityLevels:',
+    ...renderYamlList(review.severityLevels || [], '    '),
+    '  categories:',
+    ...renderYamlList(review.categories || [], '    '),
+    `  projectContext: ${yamlString(review.projectContext ?? '')}`,
+    `  includeAllFiles: ${review.includeAllFiles ?? false}`,
+    `  changeSummaryMode: ${review.changeSummaryMode ?? 'deterministic'}`,
+    `  contextAware: ${review.contextAware ?? true}`,
+    `  groupByDirectory: ${review.groupByDirectory ?? true}`,
+    `  groupByFeature: ${review.groupByFeature ?? true}`,
+    `  maxGroupSize: ${review.maxGroupSize ?? 5}`,
+    `  directoryDepth: ${review.directoryDepth ?? 2}`,
+    `  concurrency: ${review.concurrency ?? 3}`,
+    '',
+    'output:',
+    `  defaultFormat: ${output.defaultFormat}`,
+    `  colorize: ${output.colorize}`,
+    `  showDiff: ${output.showDiff}`,
+    '',
+    'git:',
+    `  diffContext: ${git.diffContext}`,
+    `  maxDiffSize: ${git.maxDiffSize}`,
+    '',
+    'server:',
+    `  host: ${yamlString(server?.host ?? '127.0.0.1')}`,
+    `  port: ${server?.port ?? 47831}`,
+    '',
+  ];
+
+  return lines.join('\n');
+}
+
+function isPathWithin(basePath: string, targetPath: string): boolean {
+  const relative = path.relative(basePath, targetPath);
+  return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
+}
+
+async function fetchWithTimeout(
+  fetchFn: typeof fetch,
+  url: string,
+  options: RequestInit,
+  timeoutMs: number
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetchFn(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function extractOllamaModels(data: { models?: Array<{ name?: string }> }): string[] {
+  return (data.models || [])
+    .map((model) => model.name)
+    .filter((name): name is string => Boolean(name))
+    .sort((a, b) => a.localeCompare(b));
+}
+
+function extractOpenAIModels(data: { data?: Array<{ id?: string }> }): string[] {
+  return (data.data || [])
+    .map((model) => model.id)
+    .filter((id): id is string => Boolean(id))
+    .sort((a, b) => a.localeCompare(b));
+}
+
+async function detectProviders(allowedHosts: string[]): Promise<ProviderInfo[]> {
+  const secureFetch = createSecureFetch(allowedHosts);
+  const timeoutMs = 1200;
+  const providers: ProviderInfo[] = [];
+
+  const candidates: Array<{
+    name: string;
+    provider: ProviderInfo['provider'];
+    endpoint: string;
+    type: 'ollama' | 'openai' | 'llamacpp';
+  }> = [
+    { name: 'Ollama', provider: 'ollama', endpoint: 'http://localhost:11434', type: 'ollama' },
+    {
+      name: 'LM Studio',
+      provider: 'openai-compatible',
+      endpoint: 'http://localhost:1234',
+      type: 'openai',
+    },
+    {
+      name: 'vLLM',
+      provider: 'vllm',
+      endpoint: 'http://localhost:8000',
+      type: 'openai',
+    },
+    {
+      name: 'Text Generation WebUI',
+      provider: 'openai-compatible',
+      endpoint: 'http://localhost:5000',
+      type: 'openai',
+    },
+    {
+      name: 'KoboldCpp',
+      provider: 'openai-compatible',
+      endpoint: 'http://localhost:5001',
+      type: 'openai',
+    },
+    {
+      name: 'LocalAI / TGI',
+      provider: 'openai-compatible',
+      endpoint: 'http://localhost:8080',
+      type: 'openai',
+    },
+    {
+      name: 'llama.cpp',
+      provider: 'llamacpp',
+      endpoint: 'http://localhost:8080',
+      type: 'llamacpp',
+    },
+  ];
+
+  const seenEndpoints = new Set<string>();
+  for (const candidate of candidates) {
+    if (seenEndpoints.has(candidate.endpoint)) {
+      continue;
+    }
+    try {
+      if (candidate.type === 'ollama') {
+        const res = await fetchWithTimeout(
+          secureFetch,
+          new URL('/api/tags', candidate.endpoint).toString(),
+          { method: 'GET' },
+          timeoutMs
+        );
+        if (!res.ok) continue;
+        const data = (await res.json()) as { models?: Array<{ name?: string }> };
+        providers.push({
+          name: candidate.name,
+          provider: candidate.provider,
+          endpoint: candidate.endpoint,
+          models: extractOllamaModels(data),
+        });
+        seenEndpoints.add(candidate.endpoint);
+        continue;
+      }
+
+      if (candidate.type === 'openai') {
+        const res = await fetchWithTimeout(
+          secureFetch,
+          new URL('/v1/models', candidate.endpoint).toString(),
+          { method: 'GET' },
+          timeoutMs
+        );
+        if (!res.ok) continue;
+        const data = (await res.json()) as { data?: Array<{ id?: string }> };
+        providers.push({
+          name: candidate.name,
+          provider: candidate.provider,
+          endpoint: candidate.endpoint,
+          models: extractOpenAIModels(data),
+        });
+        seenEndpoints.add(candidate.endpoint);
+        continue;
+      }
+
+      if (candidate.type === 'llamacpp') {
+        const res = await fetchWithTimeout(
+          secureFetch,
+          new URL('/health', candidate.endpoint).toString(),
+          { method: 'GET' },
+          timeoutMs
+        );
+        if (!res.ok) continue;
+        providers.push({
+          name: candidate.name,
+          provider: candidate.provider,
+          endpoint: candidate.endpoint,
+          note: 'Model name is ignored by llama.cpp.',
+        });
+        seenEndpoints.add(candidate.endpoint);
+      }
+    } catch {
+      // Ignore detection failures
+    }
+  }
+
+  return providers;
 }
 
 function applyRequestOverrides(config: AppConfig, payload: ReviewRequest): AppConfig {
@@ -141,11 +445,89 @@ function applyRequestOverrides(config: AppConfig, payload: ReviewRequest): AppCo
   if (payload.llm?.temperature !== undefined) {
     config.llm.temperature = payload.llm.temperature;
   }
+  if (payload.llm?.topP !== undefined) {
+    config.llm.topP = payload.llm.topP;
+  }
   if (payload.llm?.seed !== undefined) {
     config.llm.seed = payload.llm.seed;
   }
+  if (payload.llm?.maxTokens !== undefined) {
+    config.llm.maxTokens = payload.llm.maxTokens;
+  }
+  if (payload.llm?.apiKey) {
+    config.llm.apiKey = payload.llm.apiKey;
+  }
+  if (payload.llm?.retries !== undefined) {
+    config.llm.retries = payload.llm.retries;
+  }
+  if (payload.llm?.retryDelay !== undefined) {
+    config.llm.retryDelay = payload.llm.retryDelay;
+  }
   if (payload.network?.allowedHosts && payload.network.allowedHosts.length > 0) {
     config.network.allowedHosts = payload.network.allowedHosts;
+  }
+  if (payload.review) {
+    if (payload.review.maxFiles !== undefined) {
+      config.review.maxFiles = payload.review.maxFiles;
+    }
+    if (payload.review.maxLinesPerFile !== undefined) {
+      config.review.maxLinesPerFile = payload.review.maxLinesPerFile;
+    }
+    if (payload.review.excludePatterns) {
+      config.review.excludePatterns = payload.review.excludePatterns;
+    }
+    if (payload.review.severityLevels) {
+      config.review.severityLevels = payload.review.severityLevels;
+    }
+    if (payload.review.categories) {
+      config.review.categories = payload.review.categories;
+    }
+    if (payload.review.projectContext !== undefined) {
+      config.review.projectContext = payload.review.projectContext;
+    }
+    if (payload.review.includeAllFiles !== undefined) {
+      config.review.includeAllFiles = payload.review.includeAllFiles;
+    }
+    if (payload.review.changeSummaryMode) {
+      config.review.changeSummaryMode = payload.review.changeSummaryMode;
+    }
+    if (payload.review.contextAware !== undefined) {
+      config.review.contextAware = payload.review.contextAware;
+    }
+    if (payload.review.groupByDirectory !== undefined) {
+      config.review.groupByDirectory = payload.review.groupByDirectory;
+    }
+    if (payload.review.groupByFeature !== undefined) {
+      config.review.groupByFeature = payload.review.groupByFeature;
+    }
+    if (payload.review.maxGroupSize !== undefined) {
+      config.review.maxGroupSize = payload.review.maxGroupSize;
+    }
+    if (payload.review.directoryDepth !== undefined) {
+      config.review.directoryDepth = payload.review.directoryDepth;
+    }
+    if (payload.review.concurrency !== undefined) {
+      config.review.concurrency = payload.review.concurrency;
+    }
+  }
+  if (payload.output) {
+    if (payload.output.defaultFormat) {
+      config.output.defaultFormat = payload.output.defaultFormat;
+    }
+    if (payload.output.colorize !== undefined) {
+      config.output.colorize = payload.output.colorize;
+    }
+    if (payload.output.showDiff !== undefined) {
+      config.output.showDiff = payload.output.showDiff;
+    }
+  }
+  if (payload.git) {
+    if (payload.git.diffContext !== undefined) {
+      config.git.diffContext = payload.git.diffContext;
+    }
+    if (payload.git.maxDiffSize !== undefined) {
+      config.git.maxDiffSize = payload.git.maxDiffSize;
+    }
   }
 
   return config;
@@ -227,7 +609,14 @@ export async function startServer(options: ServerOptions): Promise<UiServerHandl
           meta: { cwd: process.cwd() },
         });
       } catch (error) {
-        sendJson(res, 500, { ok: false, error: String(error) });
+        logger.error({ error }, 'Failed to load defaults');
+        const formatted = formatError(error);
+        sendJson(res, 500, {
+          ok: false,
+          error: formatted.message,
+          code: formatted.code,
+          details: formatted.details,
+        });
       }
       return;
     }
@@ -238,7 +627,32 @@ export async function startServer(options: ServerOptions): Promise<UiServerHandl
         const listing = await listDirectories(targetPath);
         sendJson(res, 200, { ok: true, ...listing });
       } catch (error) {
-        sendJson(res, 400, { ok: false, error: String(error) });
+        logger.error({ error }, 'Failed to list directories');
+        const formatted = formatError(error);
+        sendJson(res, 400, {
+          ok: false,
+          error: formatted.message,
+          code: formatted.code,
+          details: formatted.details,
+        });
+      }
+      return;
+    }
+
+    if (req.method === 'GET' && url.pathname === '/api/providers') {
+      try {
+        const config = await loadConfig();
+        const providers = await detectProviders(config.network.allowedHosts);
+        sendJson(res, 200, { ok: true, providers });
+      } catch (error) {
+        logger.error({ error }, 'Failed to detect providers');
+        const formatted = formatError(error);
+        sendJson(res, 500, {
+          ok: false,
+          error: formatted.message,
+          code: formatted.code,
+          details: formatted.details,
+        });
       }
       return;
     }
@@ -246,29 +660,106 @@ export async function startServer(options: ServerOptions): Promise<UiServerHandl
     if (req.method === 'GET' && url.pathname === '/api/models') {
       try {
         const config = await loadConfig();
+        const provider =
+          (url.searchParams.get('provider') as AppConfig['llm']['provider']) || config.llm.provider;
         const endpoint = url.searchParams.get('endpoint') || config.llm.endpoint;
-
-        if (config.llm.provider !== 'ollama') {
-          sendJson(res, 200, { ok: true, supported: false, models: [] });
-          return;
-        }
-
-        const tagsUrl = new URL('/api/tags', endpoint).toString();
         const secureFetch = createSecureFetch(config.network.allowedHosts);
-        const response = await secureFetch(tagsUrl);
-        if (!response.ok) {
-          sendJson(res, 200, { ok: true, supported: true, models: [] });
+
+        if (provider === 'ollama') {
+          const tagsUrl = new URL('/api/tags', endpoint).toString();
+          const response = await secureFetch(tagsUrl);
+          if (!response.ok) {
+            sendJson(res, 200, { ok: true, supported: true, models: [] });
+            return;
+          }
+          const data = (await response.json()) as { models?: Array<{ name?: string }> };
+          sendJson(res, 200, { ok: true, supported: true, models: extractOllamaModels(data) });
           return;
         }
-        const data = (await response.json()) as { models?: Array<{ name?: string }> };
-        const models = (data.models || [])
-          .map((model) => model.name)
-          .filter((name): name is string => Boolean(name))
-          .sort((a, b) => a.localeCompare(b));
 
-        sendJson(res, 200, { ok: true, supported: true, models });
-      } catch (error) {
+        if (provider === 'openai-compatible' || provider === 'vllm') {
+          const modelsUrl = new URL('/v1/models', endpoint).toString();
+          const response = await secureFetch(modelsUrl);
+          if (!response.ok) {
+            sendJson(res, 200, { ok: true, supported: true, models: [] });
+            return;
+          }
+          const data = (await response.json()) as { data?: Array<{ id?: string }> };
+          sendJson(res, 200, { ok: true, supported: true, models: extractOpenAIModels(data) });
+          return;
+        }
+
         sendJson(res, 200, { ok: true, supported: false, models: [] });
+      } catch (error) {
+        logger.error({ error }, 'Failed to load models');
+        const formatted = formatError(error);
+        sendJson(res, 500, {
+          ok: false,
+          error: formatted.message,
+          code: formatted.code,
+          details: formatted.details,
+        });
+      }
+      return;
+    }
+
+    if (req.method === 'GET' && url.pathname === '/api/config-template') {
+      try {
+        const config = await loadConfig();
+        const template = buildConfigTemplate(config);
+        sendJson(res, 200, { ok: true, template });
+      } catch (error) {
+        logger.error({ error }, 'Failed to load config template');
+        const formatted = formatError(error);
+        sendJson(res, 500, {
+          ok: false,
+          error: formatted.message,
+          code: formatted.code,
+          details: formatted.details,
+        });
+      }
+      return;
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/config-template') {
+      try {
+        const payload = (await readJsonBody(req)) as ConfigTemplateRequest;
+        const config = await loadConfig();
+        const template = buildConfigTemplate(config);
+        const basePath = payload.repoPath ? path.resolve(payload.repoPath) : process.cwd();
+        const outputPath = payload.outputPath?.trim() || 'pr-review.config.yml';
+        const resolvedPath = path.isAbsolute(outputPath)
+          ? outputPath
+          : path.join(basePath, outputPath);
+        const ext = path.extname(resolvedPath).toLowerCase();
+        if (!['.yml', '.yaml'].includes(ext)) {
+          throw new PRReviewError(
+            'Config template must use a .yml or .yaml extension.',
+            'VALIDATION_ERROR'
+          );
+        }
+        if (!isPathWithin(basePath, resolvedPath)) {
+          throw new PRReviewError(
+            'Config template must be created inside the selected repository.',
+            'VALIDATION_ERROR'
+          );
+        }
+
+        await fs.mkdir(path.dirname(resolvedPath), { recursive: true });
+        await fs.writeFile(resolvedPath, template, { flag: 'wx' });
+        sendJson(res, 200, { ok: true, path: resolvedPath });
+      } catch (error) {
+        logger.error({ error }, 'Failed to generate config template');
+        const formatted = formatError(error);
+        const message =
+          error && typeof error === 'object' && 'code' in error && error.code === 'EEXIST'
+            ? 'Config template already exists. Choose a different name or delete the existing file.'
+            : formatted.message;
+        const code =
+          error && typeof error === 'object' && 'code' in error && error.code === 'EEXIST'
+            ? 'CONFIG_EXISTS'
+            : formatted.code;
+        sendJson(res, 400, { ok: false, error: message, code, details: formatted.details });
       }
       return;
     }
@@ -280,7 +771,14 @@ export async function startServer(options: ServerOptions): Promise<UiServerHandl
         const healthy = await engine.healthCheck();
         sendJson(res, 200, { ok: true, healthy });
       } catch (error) {
-        sendJson(res, 500, { ok: false, error: String(error) });
+        logger.error({ error }, 'Health check failed');
+        const formatted = formatError(error);
+        sendJson(res, 500, {
+          ok: false,
+          error: formatted.message,
+          code: formatted.code,
+          details: formatted.details,
+        });
       }
       return;
     }
@@ -345,8 +843,13 @@ export async function startServer(options: ServerOptions): Promise<UiServerHandl
         sendJson(res, 200, { ok: true, result });
       } catch (error) {
         logger.error({ error }, 'UI review failed');
-        const message = error instanceof Error ? error.message : String(error);
-        sendJson(res, 400, { ok: false, error: message });
+        const formatted = formatError(error);
+        sendJson(res, 400, {
+          ok: false,
+          error: formatted.message,
+          code: formatted.code,
+          details: formatted.details,
+        });
       }
       return;
     }

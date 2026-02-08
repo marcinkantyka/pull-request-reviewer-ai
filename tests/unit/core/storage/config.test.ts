@@ -23,6 +23,7 @@ const ENV_KEYS = [
   'MAX_GROUP_SIZE',
   'DIRECTORY_DEPTH',
   'REVIEW_CONCURRENCY',
+  'REVIEW_PROJECT_CONTEXT',
   'UI_HOST',
   'UI_PORT',
 ];
@@ -60,5 +61,11 @@ describe('loadConfig', () => {
     expect(config.network.allowedHosts).toEqual(DEFAULT_CONFIG.network.allowedHosts);
 
     await rm(dir, { recursive: true, force: true });
+  });
+
+  it('applies REVIEW_PROJECT_CONTEXT from env', async () => {
+    process.env.REVIEW_PROJECT_CONTEXT = 'Do not flag ALB ports';
+    const config = await loadConfig();
+    expect(config.review.projectContext).toBe('Do not flag ALB ports');
   });
 });

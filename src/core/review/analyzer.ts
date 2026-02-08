@@ -20,7 +20,10 @@ export class ReviewAnalyzer {
     private readonly llmClient: LLMClient,
     private readonly model: string,
     private readonly temperature: number,
-    private readonly seed?: number
+    private readonly seed?: number,
+    private readonly maxTokens?: number,
+    private readonly topP?: number,
+    private readonly projectContext?: string
   ) {}
 
   /**
@@ -30,14 +33,21 @@ export class ReviewAnalyzer {
     logger.debug({ filePath: diffInfo.filePath }, 'Analyzing file');
 
     try {
-      const prompt = createReviewPrompt(diffInfo.filePath, diffInfo.language, diffInfo.diff);
+      const prompt = createReviewPrompt(
+        diffInfo.filePath,
+        diffInfo.language,
+        diffInfo.diff,
+        this.projectContext
+      );
 
       const response = await this.llmClient.analyze({
         systemPrompt: SYSTEM_PROMPT,
         userPrompt: prompt,
         temperature: this.temperature,
+        topP: this.topP,
         model: this.model,
         seed: this.seed,
+        maxTokens: this.maxTokens,
       });
 
       const issues = this.parseIssues(response.content, diffInfo.filePath);
@@ -96,15 +106,18 @@ export class ReviewAnalyzer {
           diff: f.diff,
         })),
         groupType,
-        context
+        context,
+        this.projectContext
       );
 
       const response = await this.llmClient.analyze({
         systemPrompt: `${SYSTEM_PROMPT}\n\nAdditionally, you are analyzing MULTIPLE RELATED FILES together. Focus on cross-file consistency, dependencies, architectural patterns, and breaking changes that span multiple files.`,
         userPrompt: prompt,
         temperature: this.temperature,
+        topP: this.topP,
         model: this.model,
         seed: this.seed,
+        maxTokens: this.maxTokens,
       });
 
       const issuesByFile = this.parseGroupIssues(response.content, files);
@@ -143,13 +156,15 @@ export class ReviewAnalyzer {
    */
   async summarizeChanges(diffs: DiffInfo[], summary: ChangeSummaryStats): Promise<string> {
     try {
-      const prompt = createChangeSummaryPrompt(diffs, summary);
+      const prompt = createChangeSummaryPrompt(diffs, summary, this.projectContext);
       const response = await this.llmClient.analyze({
         systemPrompt: CHANGE_SUMMARY_SYSTEM_PROMPT,
         userPrompt: prompt,
         temperature: Math.min(this.temperature, 0.3),
+        topP: this.topP,
         model: this.model,
         seed: this.seed,
+        maxTokens: this.maxTokens,
       });
 
       return sanitizeSummary(response.content);

@@ -1,0 +1,70 @@
+# PR Review CLI configuration
+# Save as pr-review.config.yml in your repository root.
+
+llm:
+  endpoint: "http://localhost:11434"
+  provider: "ollama"
+  model: "deepseek-coder:6.7b"
+  temperature: 0
+  topP: 1
+  timeout: 60000
+  maxTokens: 2048
+  apiKey: ""
+  seed: 42
+  retries: 3
+  retryDelay: 1000
+
+network:
+  allowedHosts:
+    - "localhost"
+    - "127.0.0.1"
+    - "::1"
+
+review:
+  maxFiles: 50
+  maxLinesPerFile: 1000
+  excludePatterns:
+    - "*.lock"
+    - "*.min.js"
+    - "*.min.css"
+    - "node_modules/**"
+    - "dist/**"
+    - "build/**"
+    - ".git/**"
+    - "*.log"
+    - "*.swp"
+  severityLevels:
+    - "critical"
+    - "high"
+    - "medium"
+    - "low"
+    - "info"
+  categories:
+    - "security"
+    - "bugs"
+    - "performance"
+    - "maintainability"
+    - "style"
+    - "bestPractices"
+  projectContext: ""
+  includeAllFiles: false
+  changeSummaryMode: deterministic
+  contextAware: true
+  groupByDirectory: true
+  groupByFeature: true
+  maxGroupSize: 5
+  directoryDepth: 2
+  concurrency: 3
+
+output:
+  defaultFormat: text
+  colorize: true
+  showDiff: false
+
+git:
+  diffContext: 3
+  maxDiffSize: 10485760
+
+server:
+  host: "127.0.0.1"
+  port: 47831

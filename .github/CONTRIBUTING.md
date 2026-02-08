@@ -17,6 +17,7 @@ If you find a bug, please open an issue using the [bug report template](.github/
 - Expected vs actual behavior
 - Environment details (OS, Node.js version, etc.)
 - Relevant logs or error messages
+- Whether the issue occurs in CLI, UI, or Docker
 
 ### Suggesting Features
 

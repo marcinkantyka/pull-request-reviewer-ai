@@ -10,6 +10,7 @@ export interface LLMConfig {
   provider: LLMProvider;
   model: string;
   temperature: number;
+  topP?: number;
   timeout: number;
   maxTokens?: number;
   apiKey?: string;
@@ -28,6 +29,11 @@ export interface ReviewConfig {
   excludePatterns: string[];
   severityLevels: SeverityLevel[];
   categories: ReviewCategory[];
+  /**
+   * Project-specific context to guide review quality and reduce false positives.
+   * Example: architecture constraints, domain rules, or known tradeoffs.
+   */
+  projectContext?: string;
   /**
    * Include all files in review, ignoring exclude patterns and size limits.
    * Default: false

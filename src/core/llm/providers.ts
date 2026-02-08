@@ -33,8 +33,18 @@ export class OllamaProvider implements LLMProvider {
       temperature: request.temperature,
       stream: false,
     };
+    const options: Record<string, unknown> = {};
     if (request.seed !== undefined) {
-      body.options = { seed: request.seed };
+      options.seed = request.seed;
+    }
+    if (request.topP !== undefined) {
+      options.top_p = request.topP;
+    }
+    if (request.maxTokens !== undefined) {
+      options.num_predict = request.maxTokens;
+    }
+    if (Object.keys(options).length > 0) {
+      body.options = options;
     }
     const response = await this.secureFetch(url, {
       method: 'POST',
@@ -110,6 +120,9 @@ export class VLLMProvider implements LLMProvider {
       temperature: request.temperature,
       max_tokens: request.maxTokens,
     };
+    if (request.topP !== undefined) {
+      body.top_p = request.topP;
+    }
     if (request.seed !== undefined) {
       body.seed = request.seed;
     }
@@ -189,6 +202,9 @@ export class LlamaCppProvider implements LLMProvider {
       temperature: request.temperature,
       n_predict: request.maxTokens || 2048,
     };
+    if (request.topP !== undefined) {
+      body.top_p = request.topP;
+    }
     if (request.seed !== undefined) {
       body.seed = request.seed;
     }
@@ -273,6 +289,9 @@ export class OpenAICompatibleProvider implements LLMProvider {
       temperature: request.temperature,
       max_tokens: request.maxTokens,
     };
+    if (request.topP !== undefined) {
+      body.top_p = request.topP;
+    }
     if (request.seed !== undefined) {
       body.seed = request.seed;
     }

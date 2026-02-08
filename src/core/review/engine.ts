@@ -2,7 +2,13 @@
  * Main review engine orchestrating the review process
  */
 
-import type { DiffInfo, ReviewResult, FileReview, ChangeSummaryStats } from '../../types/review.js';
+import type {
+  DiffInfo,
+  ReviewResult,
+  FileReview,
+  ChangeSummaryStats,
+  ReviewWarning,
+} from '../../types/review.js';
 import type { AppConfig } from '../../types/config.js';
 import { ReviewAnalyzer } from './analyzer.js';
 import { generateSummary } from './scorer.js';
@@ -16,6 +22,7 @@ import { buildChangeSummaryStats, buildDeterministicNarrative } from './change-s
 export class ReviewEngine {
   private llmClient: LLMClient;
   private analyzer: ReviewAnalyzer;
+  private warnings: ReviewWarning[] = [];
 
   constructor(private readonly config: AppConfig) {
     const provider = createLLMProvider(config.llm, config.network.allowedHosts);
@@ -29,7 +36,10 @@ export class ReviewEngine {
       this.llmClient,
       config.llm.model,
       config.llm.temperature,
-      config.llm.seed
+      config.llm.seed,
+      config.llm.maxTokens,
+      config.llm.topP,
+      config.review.projectContext
     );
   }
 
@@ -41,6 +51,7 @@ export class ReviewEngine {
     sourceBranch: string,
     targetBranch: string
   ): Promise<ReviewResult> {
+    this.warnings = [];
     const startTime = Date.now();
     logger.info({ fileCount: diffs.length, sourceBranch, targetBranch }, 'Starting code review');
 
@@ -87,6 +98,7 @@ export class ReviewEngine {
           targetBranch,
           llmModel: this.config.llm.model,
           duration,
+          warnings: this.warnings.length > 0 ? this.warnings : undefined,
         },
       };
     }
@@ -113,6 +125,7 @@ export class ReviewEngine {
         targetBranch,
         llmModel: this.config.llm.model,
         duration,
+        warnings: this.warnings.length > 0 ? this.warnings : undefined,
       },
     };
 
@@ -187,6 +200,10 @@ export class ReviewEngine {
           const groupIndex = batchResults.indexOf(result);
           // eslint-disable-next-line security/detect-object-injection
           const group = batch[groupIndex];
+          this.addWarningFromError(result.reason, {
+            groupType: group?.groupType,
+            files: group?.files?.map((file) => file.filePath),
+          });
           if (group) {
             for (const file of group.files) {
               results.push({
@@ -264,6 +281,10 @@ export class ReviewEngine {
         },
         'Group review failed, falling back to individual reviews'
       );
+      this.addWarningFromError(error, {
+        groupType: group.groupType,
+        files: group.files.map((file) => file.filePath),
+      });
       return null;
     }
   }
@@ -282,6 +303,7 @@ export class ReviewEngine {
       // eslint-disable-next-line security/detect-object-injection
       const file = files[index];
       logger.warn({ filePath: file.filePath }, 'Failed to review file individually');
+      this.addWarningFromError(result.reason, { filePath: file.filePath });
       return {
         path: file.filePath,
         language: file.language,
@@ -311,6 +333,7 @@ export class ReviewEngine {
         { filePath: diff.filePath, error: error instanceof Error ? error.message : String(error) },
         'Failed to review file'
       );
+      this.addWarningFromError(error, { filePath: diff.filePath });
 
       return {
         path: diff.filePath,
@@ -349,7 +372,27 @@ export class ReviewEngine {
         { error: error instanceof Error ? error.message : String(error) },
         'Failed to generate change summary narrative'
       );
+      this.addWarningFromError(error, { groupType: 'summary' });
       return 'Change summary narrative unavailable due to an error.';
     }
+  }
+
+  private addWarningFromError(
+    error: unknown,
+    context: { filePath?: string; groupType?: string; files?: string[] }
+  ): void {
+    const message = error instanceof Error ? error.message : String(error);
+    const code =
+      error && typeof error === 'object' && 'code' in error && typeof error.code === 'string'
+        ? (error.code as string)
+        : 'LLM_ERROR';
+    const details = error instanceof Error ? undefined : error;
+    this.warnings.push({
+      code,
+      message,
+      details: context.files ? { files: context.files, details } : details,
+      filePath: context.filePath,
+      groupType: context.groupType,
+    });
   }
 }

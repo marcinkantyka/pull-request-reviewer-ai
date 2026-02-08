@@ -60,6 +60,7 @@ suite('UI server', () => {
     process.env.LLM_MODEL = 'mock-model';
     process.env.LLM_TEMPERATURE = '0';
     process.env.LLM_SEED = '42';
+    process.env.REVIEW_PROJECT_CONTEXT = 'Project context for tests';
     process.env.LOG_LEVEL = 'silent';
     process.env.NODE_ENV = 'test';
 
@@ -81,6 +82,15 @@ suite('UI server', () => {
     expect(data.ok).toBe(true);
     expect(data.defaults).toBeTruthy();
     expect(data.meta.cwd).toBeTruthy();
+    expect(data.defaults.review.projectContext).toBe('Project context for tests');
+  });
+
+  it('serves config template with project context', async () => {
+    const res = await fetch(`http://${server.host}:${server.port}/api/config-template`);
+    const data = await res.json();
+    expect(data.ok).toBe(true);
+    expect(String(data.template)).toContain('projectContext');
+    expect(String(data.template)).toContain('Project context for tests');
   });
 
   it('lists directories', async () => {

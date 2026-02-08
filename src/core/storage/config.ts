@@ -16,11 +16,12 @@ export const DEFAULT_CONFIG: AppConfig = {
     endpoint: process.env.LLM_ENDPOINT || 'http://localhost:11434',
     provider: (process.env.LLM_PROVIDER as AppConfig['llm']['provider']) || 'ollama',
     model: process.env.LLM_MODEL || 'deepseek-coder:6.7b',
-    temperature: parseFloat(process.env.LLM_TEMPERATURE || '0.2'),
+    temperature: parseFloat(process.env.LLM_TEMPERATURE || '0'),
+    topP: process.env.LLM_TOP_P ? parseFloat(process.env.LLM_TOP_P) : 1,
     timeout: parseInt(process.env.LLM_TIMEOUT || '60000', 10),
     maxTokens: parseInt(process.env.LLM_MAX_TOKENS || '2048', 10),
     apiKey: process.env.LLM_API_KEY,
-    seed: process.env.LLM_SEED ? parseInt(process.env.LLM_SEED, 10) : undefined,
+    seed: process.env.LLM_SEED ? parseInt(process.env.LLM_SEED, 10) : 42,
     retries: 3,
     retryDelay: 1000,
   },
@@ -43,6 +44,7 @@ export const DEFAULT_CONFIG: AppConfig = {
     ],
     severityLevels: ['critical', 'high', 'medium', 'low', 'info'],
     categories: ['security', 'bugs', 'performance', 'maintainability', 'style', 'bestPractices'],
+    projectContext: process.env.REVIEW_PROJECT_CONTEXT || '',
     includeAllFiles: false,
     changeSummaryMode: 'deterministic',
     contextAware:
@@ -131,6 +133,9 @@ export async function loadConfig(configPath?: string): Promise<AppConfig> {
   if (process.env.LLM_TEMPERATURE) {
     config.llm!.temperature = parseFloat(process.env.LLM_TEMPERATURE);
   }
+  if (process.env.LLM_TOP_P) {
+    config.llm!.topP = parseFloat(process.env.LLM_TOP_P);
+  }
   if (process.env.LLM_TIMEOUT) {
     config.llm!.timeout = parseInt(process.env.LLM_TIMEOUT, 10);
   }
@@ -139,6 +144,9 @@ export async function loadConfig(configPath?: string): Promise<AppConfig> {
   }
   if (process.env.LLM_SEED) {
     config.llm!.seed = parseInt(process.env.LLM_SEED, 10);
+  }
+  if (process.env.REVIEW_PROJECT_CONTEXT) {
+    config.review!.projectContext = process.env.REVIEW_PROJECT_CONTEXT;
   }
   if (process.env.NETWORK_ALLOWED_HOSTS) {
     config.network!.allowedHosts = process.env.NETWORK_ALLOWED_HOSTS.split(',')

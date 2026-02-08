@@ -31,6 +31,7 @@ A clear and concise description of what actually happened.
 - **Tool version**: [e.g., 1.1.0]
 - **LLM provider**: [e.g., Ollama, vLLM]
 - **LLM model**: [e.g., deepseek-coder:6.7b]
+- **UI or CLI**: [UI / CLI]
 
 ## Configuration
 

@@ -2,6 +2,11 @@
 
 This directory contains Docker configurations for running PR Review CLI with complete network isolation.
 
+## Requirements
+
+- Docker Engine
+- Docker Compose (`docker compose` or `docker-compose`)
+
 ## Quick Start
 
 To get started, just run:
@@ -44,7 +49,7 @@ This approach is universal - you can review any git repository without modifying
 
 ## Manual Usage
 
-### Standard startup (after initial setup):
+### Standard startup (after initial setup)
 
 ```bash
 docker-compose up -d
@@ -64,24 +69,26 @@ REPO_PATH=/path/to/your/repo docker compose up pr-review
 
 This mounts the repo read-only at `/workspace` and writes outputs to `docker/output`.
 
-### Run review commands (recommended):
+### Run review commands (recommended)
 
 Use the universal wrapper script that works with any git repository:
 
 ```bash
 # From any git repository directory:
 cd /path/to/your/repo
-../../pr-reviewer/docker/run-review.sh . review --base main
+/path/to/pull-request-reviewer-ai/docker/run-review.sh . review --base main
 
 # Or specify the repo path explicitly:
-./run-review.sh /path/to/your/repo compare feature-branch main
+/path/to/pull-request-reviewer-ai/docker/run-review.sh /path/to/your/repo compare feature-branch main
 
 # With custom options:
-./run-review.sh . compare feature-branch main --format json --output /output/review.json
+/path/to/pull-request-reviewer-ai/docker/run-review.sh . compare feature-branch main --format json --output /output/review.json
 
 # Review current directory (default):
-./run-review.sh review --base main
+/path/to/pull-request-reviewer-ai/docker/run-review.sh review --base main
 ```
+
+Outputs are written to `docker/output` (mounted as `/output`).
 
 ### Configuration (Docker)
 
@@ -92,8 +99,16 @@ You can pass configuration to the container via:
 Recommended deterministic + offline-safe settings:
 - `LLM_TEMPERATURE=0`
 - `LLM_SEED=42`
+- `LLM_TOP_P=1`
 - `NETWORK_ALLOWED_HOSTS=ollama,localhost,127.0.0.1,::1`
 - Set `review.changeSummaryMode: deterministic` in your config file
+
+### Model selection
+
+By default the scripts use `deepseek-coder:6.7b`. To change the model:
+
+- Download it in Ollama (`ollama pull <model>`)
+- Set `LLM_MODEL=<model>` when running the container or in your config
 
 Example (manual run):
 
@@ -126,11 +141,15 @@ docker compose build pr-review
 # Capture the version tag used by the image
 VERSION=$(node -p "require('../package.json').version")
 
+# Find the compose network name (varies by directory)
+NETWORK_NAME="$(docker compose -f docker-compose.yml config --project-name)_pr-review-network"
+# If you use docker-compose v1, replace `docker compose` with `docker-compose`.
+
 # Run review for any repository
 docker run --rm -it \
-    --network pr-reviewer_pr-review-network \
+    --network "$NETWORK_NAME" \
     -v /path/to/your/repo:/workspace:ro \
-    -v $(pwd)/docker/output:/output \
+    -v $(pwd)/output:/output \
     -e LLM_ENDPOINT=http://ollama:11434 \
     -e LLM_MODEL=deepseek-coder:6.7b \
     -e NETWORK_ALLOWED_HOSTS=ollama,localhost,127.0.0.1,::1 \
