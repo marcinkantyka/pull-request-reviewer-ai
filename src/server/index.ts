@@ -563,9 +563,7 @@ function applySeverityFilter(result: ReviewResult, severity: ReviewRequest['seve
   };
 }
 
-async function listDirectories(
-  targetPath?: string
-): Promise<{
+async function listDirectories(targetPath?: string): Promise<{
   path: string;
   parent: string | null;
   entries: Array<{ name: string; path: string }>;
