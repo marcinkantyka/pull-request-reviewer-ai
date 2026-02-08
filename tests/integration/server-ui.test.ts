@@ -85,6 +85,10 @@ suite('UI server', () => {
     };
     expect(data.ok).toBe(true);
     expect(data.defaults).toBeTruthy();
+    expect(data.meta).toBeTruthy();
+    if (!data.defaults || !data.meta) {
+      throw new Error('Missing defaults or meta in response');
+    }
     expect(data.meta.cwd).toBeTruthy();
     expect(data.defaults.review.projectContext).toBe('Project context for tests');
   });
