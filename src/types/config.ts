@@ -30,7 +30,7 @@ export interface ReviewConfig {
   categories: ReviewCategory[];
   /**
    * Include all files in review, ignoring exclude patterns and size limits.
-   * Default: true
+   * Default: false
    */
   includeAllFiles?: boolean;
   /**
@@ -99,6 +99,10 @@ export interface AppConfig {
   review: ReviewConfig;
   output: OutputConfig;
   git: GitConfig;
+  server?: {
+    host?: string;
+    port?: number;
+  };
 }
 
 export type SeverityLevel = 'critical' | 'high' | 'medium' | 'low' | 'info';

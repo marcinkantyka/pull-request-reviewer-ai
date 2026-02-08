@@ -98,6 +98,7 @@ Recommended deterministic + offline-safe settings:
 Example (manual run):
 
 ```bash
+VERSION=$(node -p "require('../package.json').version")
 docker run --rm -it \
   --network pr-reviewer_pr-review-network \
   -v /path/to/your/repo:/workspace:ro \
@@ -109,7 +110,7 @@ docker run --rm -it \
   -e NETWORK_ALLOWED_HOSTS=ollama,localhost,127.0.0.1,::1 \
   -w /workspace \
   pr-reviewer-pr-review:${VERSION} \
-  node dist/cli/index.js review --base main --format json --output /output/review.json
+  review --base main --format json --output /output/review.json
 ```
 
 ### Alternative: Manual docker run
@@ -122,6 +123,9 @@ docker-compose build pr-review
 # or
 docker compose build pr-review
 
+# Capture the version tag used by the image
+VERSION=$(node -p "require('../package.json').version")
+
 # Run review for any repository
 docker run --rm -it \
     --network pr-reviewer_pr-review-network \
@@ -132,7 +136,7 @@ docker run --rm -it \
     -e NETWORK_ALLOWED_HOSTS=ollama,localhost,127.0.0.1,::1 \
     -w /workspace \
     pr-reviewer-pr-review:${VERSION} \
-    node dist/cli/index.js compare feature-branch main
+    compare feature-branch main
 ```
 
 ### Download models manually (if start.sh fails):
@@ -146,12 +150,17 @@ docker run --rm -it \
 ```bash
 docker-compose logs -f ollama
 docker-compose logs -f pr-review
+# or
+docker compose logs -f ollama
+docker compose logs -f pr-review
 ```
 
 ### Stop services:
 
 ```bash
 docker-compose down
+# or
+docker compose down
 ```
 
 ## How Security Works

@@ -43,14 +43,27 @@ export function createReviewCommand(): Command {
 
         const config = await loadConfig(options.config);
 
-        if (options.timeout) {
-          config.llm.timeout =
-            (typeof options.timeout === 'string'
+        if (options.timeout !== undefined) {
+          const timeoutSeconds =
+            typeof options.timeout === 'string'
               ? parseInt(options.timeout, 10)
-              : options.timeout) * 1000;
+              : options.timeout;
+          if (Number.isFinite(timeoutSeconds) && timeoutSeconds > 0) {
+            config.llm.timeout = timeoutSeconds * 1000;
+          } else {
+            throw new PRReviewError('Invalid timeout value', 'VALIDATION_ERROR');
+          }
         }
-        if (options.maxFiles) {
-          config.review.maxFiles = options.maxFiles;
+        if (options.maxFiles !== undefined) {
+          const maxFiles =
+            typeof options.maxFiles === 'string'
+              ? parseInt(options.maxFiles, 10)
+              : options.maxFiles;
+          if (Number.isFinite(maxFiles) && maxFiles > 0) {
+            config.review.maxFiles = maxFiles;
+          } else {
+            throw new PRReviewError('Invalid max files value', 'VALIDATION_ERROR');
+          }
         }
 
         const repoPath = options.repoPath || process.cwd();

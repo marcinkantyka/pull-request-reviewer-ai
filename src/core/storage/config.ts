@@ -66,6 +66,10 @@ export const DEFAULT_CONFIG: AppConfig = {
     diffContext: 3,
     maxDiffSize: 10485760, // 10MB
   },
+  server: {
+    host: process.env.UI_HOST || '127.0.0.1',
+    port: process.env.UI_PORT ? parseInt(process.env.UI_PORT, 10) : 0,
+  },
 };
 
 /**
@@ -103,7 +107,16 @@ export async function loadConfig(configPath?: string): Promise<AppConfig> {
   }
 
   const config: Partial<AppConfig> = result?.config
-    ? { ...DEFAULT_CONFIG, ...result.config }
+    ? {
+        ...DEFAULT_CONFIG,
+        ...result.config,
+        llm: { ...DEFAULT_CONFIG.llm, ...result.config.llm },
+        network: { ...DEFAULT_CONFIG.network, ...result.config.network },
+        review: { ...DEFAULT_CONFIG.review, ...result.config.review },
+        output: { ...DEFAULT_CONFIG.output, ...result.config.output },
+        git: { ...DEFAULT_CONFIG.git, ...result.config.git },
+        server: { ...DEFAULT_CONFIG.server, ...result.config.server },
+      }
     : DEFAULT_CONFIG;
 
   if (process.env.LLM_ENDPOINT) {

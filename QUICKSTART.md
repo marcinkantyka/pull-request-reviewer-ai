@@ -35,21 +35,27 @@ curl http://localhost:11434/api/tags
 ### 3. Run your first review
 
 ```bash
-# If you ran npm link, use:
+# If installed globally:
 pr-review review --base main
 
-# Otherwise, use:
+# Or run from source:
 node dist/cli/index.js review --base main
 ```
 
 That's all you need. The tool will analyze your changes and show you the results.
+
+Optional: start the local UI (still offline/local-only):
+
+```bash
+pr-review --server --host 127.0.0.1 --port 0
+```
 
 ## Configuration (optional)
 
 The tool works with defaults, but you can customize it:
 
 ```bash
-# Create a config file (if using npm link or global install)
+# Create a config file (if using global install)
 pr-review config init
 
 # Or if running from source

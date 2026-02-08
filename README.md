@@ -204,6 +204,10 @@ output:
 git:
   diffContext: 3
   maxDiffSize: 10485760 # 10MB
+
+server:
+  host: '127.0.0.1'
+  port: 0 # 0 = random free port
 ```
 
 ### Environment Variables
@@ -218,6 +222,8 @@ export LLM_API_KEY=your-key-here       # Optional
 export LLM_TIMEOUT=60000
 export LLM_SEED=42                     # Optional
 export NETWORK_ALLOWED_HOSTS=ollama,localhost,127.0.0.1,::1
+export UI_HOST=127.0.0.1
+export UI_PORT=0
 ```
 
 Run `pr-review config init` to generate a default config file with all the available options.
@@ -280,6 +286,12 @@ pr-review config list                    # List all configuration
 
 ## Options
 
+Global options:
+
+- `--server` - Start the local UI server
+- `--host <host>` - UI server host (default: 127.0.0.1)
+- `--port <port>` - UI server port (default: 0 for random free port)
+
 Common options available for both `review` and `compare` commands:
 
 - `--repo-path <path>` - Repository path (default: current working directory)
@@ -304,6 +316,21 @@ Takes two required arguments:
 
 - `<source-branch>` - Source branch to review
 - `<target-branch>` - Target branch to compare against
+
+## Local UI (optional)
+
+Start a local web UI without changing the default CLI workflow:
+
+```bash
+pr-review --server --host 127.0.0.1 --port 0
+```
+
+`--port 0` picks a free port automatically. The UI is local-only by default. `--server` cannot be combined with other commands.
+
+In UI mode, only JSON/YAML config files are accepted.
+
+The UI compares committed branch diffs. Uncommitted working tree changes are not included.
+If you use Ollama, the UI can load available models from `/api/tags`.
 
 ## LLM providers
 
@@ -461,22 +488,14 @@ jobs:
           LLM_MODEL: deepseek-coder:1.3b
           NETWORK_ALLOWED_HOSTS: localhost,127.0.0.1,::1
 ```
-          LLM_PROVIDER: ollama
-        continue-on-error: true
-
-      - name: Upload review as artifact
-        uses: actions/upload-artifact@v3
-        if: always()
-        with:
-          name: code-review
-          path: review.json
-```
 
 For a more complete example with PR comments, see `examples/ci-integration.yml`.
 
 ## Security
 
 The tool only allows connections to localhost. If you try to connect to an external host, it will be blocked. Everything runs locally on your machine—your code never leaves your computer.
+
+The local UI server only accepts loopback connections. Remote network requests are blocked even if you bind to `0.0.0.0`.
 
 ## Troubleshooting
 

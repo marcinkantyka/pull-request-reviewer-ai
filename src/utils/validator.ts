@@ -52,12 +52,20 @@ export const GitConfigSchema = z.object({
   maxDiffSize: z.number().positive(),
 });
 
+export const ServerConfigSchema = z
+  .object({
+    host: z.string().min(1).optional(),
+    port: z.number().int().min(0).max(65535).optional(),
+  })
+  .optional();
+
 export const ConfigSchema = z.object({
   llm: LLMConfigSchema,
   network: NetworkConfigSchema,
   review: ReviewConfigSchema,
   output: OutputConfigSchema,
   git: GitConfigSchema,
+  server: ServerConfigSchema,
 });
 
 import type { AppConfig } from '../types/config.js';

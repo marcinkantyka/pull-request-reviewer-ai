@@ -23,6 +23,7 @@ Then rebuild:
 ```bash
 cd docker
 docker-compose build pr-review
+docker compose build pr-review
 ```
 
 The version will automatically be used in:
