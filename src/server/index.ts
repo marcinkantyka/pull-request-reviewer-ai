@@ -565,7 +565,11 @@ function applySeverityFilter(result: ReviewResult, severity: ReviewRequest['seve
 
 async function listDirectories(
   targetPath?: string
-): Promise<{ path: string; parent: string | null; entries: Array<{ name: string; path: string }> }> {
+): Promise<{
+  path: string;
+  parent: string | null;
+  entries: Array<{ name: string; path: string }>;
+}> {
   const resolved = path.resolve(targetPath || process.cwd());
   // eslint-disable-next-line security/detect-non-literal-fs-filename
   const stats = await fs.stat(resolved);
