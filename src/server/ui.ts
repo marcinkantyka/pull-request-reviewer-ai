@@ -277,12 +277,20 @@ textarea {
   margin: 0;
 }
 
-.toggle-field {
-  display: grid;
-  gap: 6px;
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  padding-top: 2px;
 }
 
-.field-label {
+.toggle-label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.toggle-status {
   font-size: 12px;
   color: var(--muted);
 }
@@ -979,6 +987,7 @@ const emptyStateEl = byId('emptyState');
 const warningsEl = byId('warnings');
 const warningsListEl = byId('warningsList');
 const warningsDetailsEl = byId('warningsDetails');
+const toggleStatusEls = Array.from(document.querySelectorAll('.toggle-status'));
 const allowedSeverities = new Set(['critical', 'high', 'medium', 'low', 'info']);
 const modelListEl = byId('modelList');
 const modelStatusEl = byId('modelStatus');
@@ -1157,6 +1166,20 @@ function scrollToPanel(targetId) {
   if (panel) {
     panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
+}
+
+function updateToggleStatuses() {
+  toggleStatusEls.forEach((statusEl) => {
+    const targetId = statusEl.dataset.statusFor;
+    if (!targetId) {
+      return;
+    }
+    const input = byId(targetId);
+    if (!input || !('checked' in input)) {
+      return;
+    }
+    statusEl.textContent = input.checked ? 'Enabled' : 'Disabled';
+  });
 }
 
 function renderChangeSummary(narrative) {
@@ -1577,6 +1600,7 @@ async function loadDefaults() {
 
   updateModeFields();
   updatePreview();
+  updateToggleStatuses();
   renderSettings();
   loadModels();
 }
@@ -1920,6 +1944,13 @@ fields.mode.addEventListener('change', updateModeFields);
   fields.severity,
   fields.timeout,
 ].forEach((field) => field.addEventListener('input', updatePreview));
+[
+  fields.outputColorize,
+  fields.outputShowDiff,
+  fields.contextAware,
+  fields.groupByDirectory,
+  fields.groupByFeature,
+].forEach((field) => field.addEventListener('change', updateToggleStatuses));
 byId('refreshDefaults').addEventListener('click', loadDefaults);
 byId('refreshModels').addEventListener('click', loadModels);
 fields.provider.addEventListener('change', loadModels);
@@ -2263,17 +2294,22 @@ window.addEventListener('unhandledrejection', (event) => {
                   <option value="md">md</option>
                 </select>
               </div>
-              <div class="toggle-field">
-                <div class="field-label">Colorize output</div>
+              <div class="toggle-row">
+                <span class="toggle-label">Colorize output</span>
                 <label class="toggle inline">
-                  <input id="outputColorize" type="checkbox" /> Enabled
+                  <input id="outputColorize" type="checkbox" />
+                  <span class="toggle-status" data-status-for="outputColorize">Enabled</span>
                 </label>
               </div>
             </div>
 
-            <label class="toggle">
-              <input id="outputShowDiff" type="checkbox" /> Include diff in output
-            </label>
+            <div class="toggle-row">
+              <span class="toggle-label">Include diff in output</span>
+              <label class="toggle inline">
+                <input id="outputShowDiff" type="checkbox" />
+                <span class="toggle-status" data-status-for="outputShowDiff">Enabled</span>
+              </label>
+            </div>
 
             <div class="row">
               <div>
@@ -2318,25 +2354,28 @@ window.addEventListener('unhandledrejection', (event) => {
                   <option value="llm">llm</option>
                 </select>
               </div>
-              <div class="toggle-field">
-                <div class="field-label">Context-aware review</div>
+              <div class="toggle-row">
+                <span class="toggle-label">Context-aware review</span>
                 <label class="toggle inline">
-                  <input id="contextAware" type="checkbox" /> Enabled
+                  <input id="contextAware" type="checkbox" />
+                  <span class="toggle-status" data-status-for="contextAware">Enabled</span>
                 </label>
               </div>
             </div>
 
             <div class="row">
-              <div class="toggle-field">
-                <div class="field-label">Group by directory</div>
+              <div class="toggle-row">
+                <span class="toggle-label">Group by directory</span>
                 <label class="toggle inline">
-                  <input id="groupByDirectory" type="checkbox" /> Enabled
+                  <input id="groupByDirectory" type="checkbox" />
+                  <span class="toggle-status" data-status-for="groupByDirectory">Enabled</span>
                 </label>
               </div>
-              <div class="toggle-field">
-                <div class="field-label">Group by feature</div>
+              <div class="toggle-row">
+                <span class="toggle-label">Group by feature</span>
                 <label class="toggle inline">
-                  <input id="groupByFeature" type="checkbox" /> Enabled
+                  <input id="groupByFeature" type="checkbox" />
+                  <span class="toggle-status" data-status-for="groupByFeature">Enabled</span>
                 </label>
               </div>
             </div>
