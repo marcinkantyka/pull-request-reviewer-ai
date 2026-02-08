@@ -281,7 +281,7 @@ function isPathWithin(basePath: string, targetPath: string): boolean {
 }
 
 async function fetchWithTimeout(
-  fetchFn: typeof fetch,
+  fetchFn: (url: string, options?: RequestInit) => Promise<Response>,
   url: string,
   options: RequestInit,
   timeoutMs: number

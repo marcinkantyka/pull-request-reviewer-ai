@@ -78,7 +78,11 @@ suite('UI server', () => {
 
   it('serves defaults and cwd', async () => {
     const res = await fetch(`http://${server.host}:${server.port}/api/defaults`);
-    const data = await res.json();
+    const data = (await res.json()) as {
+      ok: boolean;
+      defaults?: { review: { projectContext?: string } };
+      meta?: { cwd?: string };
+    };
     expect(data.ok).toBe(true);
     expect(data.defaults).toBeTruthy();
     expect(data.meta.cwd).toBeTruthy();
@@ -87,7 +91,7 @@ suite('UI server', () => {
 
   it('serves config template with project context', async () => {
     const res = await fetch(`http://${server.host}:${server.port}/api/config-template`);
-    const data = await res.json();
+    const data = (await res.json()) as { ok: boolean; template?: string };
     expect(data.ok).toBe(true);
     expect(String(data.template)).toContain('projectContext');
     expect(String(data.template)).toContain('Project context for tests');
@@ -97,7 +101,11 @@ suite('UI server', () => {
     const res = await fetch(
       `http://${server.host}:${server.port}/api/fs?path=${encodeURIComponent(repoPath)}`
     );
-    const data = await res.json();
+    const data = (await res.json()) as {
+      ok: boolean;
+      path: string;
+      entries: Array<{ name: string }>;
+    };
     expect(data.ok).toBe(true);
     expect(data.path).toBe(repoPath);
     expect(data.entries.some((entry: { name: string }) => entry.name === 'src')).toBe(true);
@@ -105,7 +113,7 @@ suite('UI server', () => {
 
   it('returns unsupported for models when provider is not ollama', async () => {
     const res = await fetch(`http://${server.host}:${server.port}/api/models`);
-    const data = await res.json();
+    const data = (await res.json()) as { ok: boolean; supported: boolean };
     expect(data.ok).toBe(true);
     expect(data.supported).toBe(false);
   });
@@ -123,7 +131,10 @@ suite('UI server', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
-    const data = await res.json();
+    const data = (await res.json()) as {
+      ok: boolean;
+      result: { summary: { filesReviewed: number } };
+    };
     expect(data.ok).toBe(true);
     expect(data.result.summary.filesReviewed).toBeGreaterThan(0);
   });
