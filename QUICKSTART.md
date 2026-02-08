@@ -47,8 +47,10 @@ That's all you need. The tool will analyze your changes and show you the results
 Optional: start the local UI (still offline/local-only):
 
 ```bash
-pr-review --server --host 127.0.0.1 --port 0
+pr-review --server
 ```
+
+Default port is `47831`. If that port is busy, the server falls back to a random free port. You can force a random port with `--port 0`.
 
 ## Configuration (optional)
 

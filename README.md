@@ -223,7 +223,7 @@ export LLM_TIMEOUT=60000
 export LLM_SEED=42                     # Optional
 export NETWORK_ALLOWED_HOSTS=ollama,localhost,127.0.0.1,::1
 export UI_HOST=127.0.0.1
-export UI_PORT=0
+export UI_PORT=47831
 ```
 
 Run `pr-review config init` to generate a default config file with all the available options.
@@ -322,10 +322,10 @@ Takes two required arguments:
 Start a local web UI without changing the default CLI workflow:
 
 ```bash
-pr-review --server --host 127.0.0.1 --port 0
+pr-review --server
 ```
 
-`--port 0` picks a free port automatically. The UI is local-only by default. `--server` cannot be combined with other commands.
+Default port is `47831`. If that port is busy, the server falls back to a random free port. You can always force a random port with `--port 0`. The UI is local-only by default. `--server` cannot be combined with other commands.
 
 In UI mode, only JSON/YAML config files are accepted.
 

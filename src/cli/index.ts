@@ -10,6 +10,7 @@ import { createConfigCommand } from './commands/config.js';
 import { logger } from '../utils/logger.js';
 import { startServer } from '../server/index.js';
 import { readFileSync, existsSync } from 'fs';
+import net from 'node:net';
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
 
@@ -51,7 +52,7 @@ function readPackageVersion(): string {
 async function main(): Promise<void> {
   const version = readPackageVersion();
   const defaultHost = process.env.UI_HOST || '127.0.0.1';
-  const defaultPort = process.env.UI_PORT || '0';
+  const defaultPort = process.env.UI_PORT || '47831';
   const rawArgs = process.argv.slice(2);
 
   const getOptionValue = (flag: string, fallback: string): string => {
@@ -64,6 +65,22 @@ async function main(): Promise<void> {
       return fallback;
     }
     return value;
+  };
+
+  const resolvePort = async (host: string, desiredPort: number): Promise<number> => {
+    if (desiredPort === 0) {
+      return 0;
+    }
+
+    return new Promise((resolve) => {
+      const tester = net
+        .createServer()
+        .once('error', () => resolve(0))
+        .once('listening', () => {
+          tester.close(() => resolve(desiredPort));
+        })
+        .listen(desiredPort, host);
+    });
   };
 
   if (rawArgs.includes('--server')) {
@@ -86,7 +103,8 @@ async function main(): Promise<void> {
     }
 
     const parsedPort = Number.parseInt(portRaw, 10);
-    const port = Number.isNaN(parsedPort) ? 0 : parsedPort;
+    const desiredPort = Number.isNaN(parsedPort) ? 0 : parsedPort;
+    const port = await resolvePort(host, desiredPort);
     await startServer({
       host,
       port,

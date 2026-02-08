@@ -8,24 +8,24 @@ export function renderUI(options: UiRenderOptions): string {
   const css = String.raw`
 :root {
   color-scheme: light;
-  --bg: #f6f7f4;
+  --bg: #f6f8fa;
   --surface: #ffffff;
-  --text: #1b1f24;
-  --muted: #5c6773;
-  --border: #e2e6e9;
-  --accent: #1c7c8c;
-  --accent-strong: #16616e;
-  --accent-soft: #e5f3f5;
-  --highlight: #eeb868;
-  --critical: #c0392b;
-  --high: #e67e22;
-  --medium: #f1c40f;
-  --low: #2ecc71;
-  --info: #3498db;
-  --shadow: 0 12px 30px rgba(27, 31, 36, 0.08);
+  --text: #24292f;
+  --muted: #57606a;
+  --border: #d0d7de;
+  --accent: #0969da;
+  --accent-strong: #0550ae;
+  --accent-soft: #ddf4ff;
+  --highlight: #ffdfb6;
+  --critical: #cf222e;
+  --high: #bc4c00;
+  --medium: #bf8700;
+  --low: #1a7f37;
+  --info: #0969da;
+  --shadow: 0 1px 0 rgba(27, 31, 36, 0.04), 0 1px 3px rgba(27, 31, 36, 0.12);
   --radius-sm: 6px;
   --radius-md: 10px;
-  --radius-lg: 16px;
+  --radius-lg: 12px;
 }
 
 * {
@@ -45,9 +45,10 @@ export function renderUI(options: UiRenderOptions): string {
 
 body {
   margin: 0;
-  font-family: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial,
+    sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
   color: var(--text);
-  background: radial-gradient(circle at top right, #f0f6f7 0%, #f6f7f4 45%, #f8f5f0 100%);
+  background: var(--bg);
 }
 
 code, pre, .mono {
@@ -277,7 +278,7 @@ button.primary {
 }
 
 button.secondary {
-  background: transparent;
+  background: #f6f8fa;
   border: 1px solid var(--border);
   color: var(--text);
   padding: 10px 14px;
@@ -291,7 +292,7 @@ button:disabled {
 }
 
 .preview {
-  background: #f7f8f9;
+  background: #f6f8fa;
   border: 1px dashed var(--border);
   border-radius: var(--radius-sm);
   padding: 10px;
@@ -302,7 +303,7 @@ button:disabled {
 }
 
 .summary-box {
-  background: #f9fbfc;
+  background: #f6f8fa;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: 12px 14px;
@@ -388,7 +389,7 @@ button:disabled {
 
 .issue-code {
   margin-top: 8px;
-  background: #f4f6f8;
+  background: #f6f8fa;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 8px 10px;
@@ -1055,7 +1056,6 @@ loadDefaults();
       </div>
 
       <div class="section-stack">
-        <div class="grid">
         <section class="panel" id="inputsPanel">
           <h3>Review Inputs</h3>
           <form id="reviewForm" class="form-grid">
@@ -1172,7 +1172,6 @@ loadDefaults();
           </div>
           <div class="muted" id="emptyState">Run a review to see results.</div>
         </section>
-        </div>
 
         <section class="panel" id="historyPanel">
           <h3>History</h3>

@@ -68,7 +68,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   },
   server: {
     host: process.env.UI_HOST || '127.0.0.1',
-    port: process.env.UI_PORT ? parseInt(process.env.UI_PORT, 10) : 0,
+    port: process.env.UI_PORT ? parseInt(process.env.UI_PORT, 10) : 47831,
   },
 };
 
