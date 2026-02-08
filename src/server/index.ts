@@ -21,6 +21,12 @@ interface ServerOptions {
   version: string;
 }
 
+export interface UiServerHandle {
+  host: string;
+  port: number;
+  close: () => Promise<void>;
+}
+
 interface ReviewRequest {
   mode?: 'compare' | 'base';
   repoPath?: string;
@@ -196,7 +202,7 @@ async function listDirectories(targetPath?: string) {
   };
 }
 
-export async function startServer(options: ServerOptions): Promise<void> {
+export async function startServer(options: ServerOptions): Promise<UiServerHandle> {
   let uiHtml = '';
 
   const server = createServer(async (req, res) => {
@@ -348,11 +354,29 @@ export async function startServer(options: ServerOptions): Promise<void> {
     sendJson(res, 404, { ok: false, error: 'Not found' });
   });
 
-  server.listen(options.port, options.host, () => {
-    const address = server.address();
-    const port = typeof address === 'object' && address ? address.port : options.port;
-    uiHtml = renderUI({ version: options.version, host: options.host, port });
-    logger.info({ host: options.host, port }, 'UI server started');
-    console.log(`UI available at http://${options.host}:${port}`);
+  await new Promise<void>((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(options.port, options.host, () => resolve());
   });
+
+  const address = server.address();
+  const port = typeof address === 'object' && address ? address.port : options.port;
+  uiHtml = renderUI({ version: options.version, host: options.host, port });
+  logger.info({ host: options.host, port }, 'UI server started');
+  console.log(`UI available at http://${options.host}:${port}`);
+
+  return {
+    host: options.host,
+    port,
+    close: () =>
+      new Promise<void>((resolve, reject) => {
+        server.close((error) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+          resolve();
+        });
+      }),
+  };
 }
