@@ -150,10 +150,7 @@ process.on('uncaughtException', (error) => {
 });
 
 main().catch((error) => {
-  logger.error(
-    { error: error instanceof Error ? error.message : String(error) },
-    'CLI failed'
-  );
+  logger.error({ error: error instanceof Error ? error.message : String(error) }, 'CLI failed');
   console.error('Error:', error instanceof Error ? error.message : String(error));
   process.exit(1);
 });

@@ -171,7 +171,7 @@ jobs:
       - name: OSV dependency scan
         uses: google/osv-scanner-action@v1.7.0
         with:
-          scan-args: "--lockfile=package-lock.json"
+          scan-args: '--lockfile=package-lock.json'
         continue-on-error: true
 
       - name: Snyk scan (optional)

@@ -46,9 +46,7 @@ export function createCompareCommand(): Command {
 
         if (options.timeout !== undefined) {
           const timeoutSeconds =
-            typeof options.timeout === 'string'
-              ? parseInt(options.timeout, 10)
-              : options.timeout;
+            typeof options.timeout === 'string' ? parseInt(options.timeout, 10) : options.timeout;
           if (Number.isFinite(timeoutSeconds) && timeoutSeconds > 0) {
             config.llm.timeout = timeoutSeconds * 1000;
           } else {

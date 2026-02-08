@@ -155,6 +155,7 @@ The report includes:
 ## Configuration
 
 This tool reads configuration from (in order):
+
 1. CLI flag `--config /path/to/config.yml`
 2. Project root config files: `pr-review.config.json` / `pr-review.config.yaml` / `pr-review.config.yml` / `pr-review.config.js` / `pr-review.config.ts` / `.pr-reviewrc` / `.pr-reviewrc.json` / `.pr-reviewrc.yaml` / `.pr-reviewrc.yml` / `package.json` (`pr-review` key)
 3. Environment variables (override file values)
@@ -162,6 +163,7 @@ This tool reads configuration from (in order):
 ### Quick Start (Deterministic + Offline-Safe)
 
 To make runs repeatable and keep everything local:
+
 - Set `temperature: 0`
 - Set `seed` to a fixed number
 - Use `changeSummaryMode: deterministic`
@@ -269,18 +271,22 @@ export REVIEW_PROJECT_CONTEXT="Do not flag exposed ports as security issues; the
 ### Common Configuration Tasks
 
 Set deterministic output:
+
 - `llm.temperature: 0`
 - `llm.seed: <fixed number>`
 - `llm.topP: 1`
 - `review.changeSummaryMode: deterministic`
 
 Review every file (ignore filters):
+
 - `review.includeAllFiles: true`
 
 Use a different config file:
+
 - `pr-review review --config /path/to/config.yml --base main`
 
 Allow internal Docker hostnames:
+
 - Add hostnames to `network.allowedHosts` or set `NETWORK_ALLOWED_HOSTS`
 
 ## Commands
@@ -442,7 +448,7 @@ The compose setup uses `internal: true` network mode, which completely blocks in
 
 See `examples/ci-integration.yml` for a complete example. Here's a basic setup:
 
-```yaml
+````yaml
 name: Code Review
 
 on:
@@ -539,7 +545,7 @@ jobs:
           LLM_ENDPOINT: http://localhost:11434
           LLM_MODEL: deepseek-coder:1.3b
           NETWORK_ALLOWED_HOSTS: localhost,127.0.0.1,::1
-```
+````
 
 For a more complete example with PR comments, see `examples/ci-integration.yml`.
 

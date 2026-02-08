@@ -93,10 +93,12 @@ Outputs are written to `docker/output` (mounted as `/output`).
 ### Configuration (Docker)
 
 You can pass configuration to the container via:
+
 - Mounting a config file (`/config/config.yml`) and setting `--config /config/config.yml`
 - Environment variables (`LLM_*`, `NETWORK_*`, `REVIEW_*`)
 
 Recommended deterministic + offline-safe settings:
+
 - `LLM_TEMPERATURE=0`
 - `LLM_SEED=42`
 - `LLM_TOP_P=1`

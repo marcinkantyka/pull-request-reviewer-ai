@@ -45,11 +45,7 @@ describe('loadConfig', () => {
     const dir = await mkdtemp(path.join(os.tmpdir(), 'pr-review-config-'));
     const configPath = path.join(dir, 'pr-review.config.yml');
 
-    await writeFile(
-      configPath,
-      `llm:\n  model: custom-model\nreview:\n  maxFiles: 5\n`,
-      'utf-8'
-    );
+    await writeFile(configPath, `llm:\n  model: custom-model\nreview:\n  maxFiles: 5\n`, 'utf-8');
 
     const config = await loadConfig(configPath);
 
