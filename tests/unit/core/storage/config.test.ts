@@ -33,6 +33,7 @@ describe('loadConfig', () => {
 
   beforeEach(() => {
     ENV_KEYS.forEach((key) => {
+      // eslint-disable-next-line security/detect-object-injection
       delete process.env[key];
     });
   });
@@ -45,6 +46,7 @@ describe('loadConfig', () => {
     const dir = await mkdtemp(path.join(os.tmpdir(), 'pr-review-config-'));
     const configPath = path.join(dir, 'pr-review.config.yml');
 
+    // eslint-disable-next-line security/detect-non-literal-fs-filename
     await writeFile(configPath, `llm:\n  model: custom-model\nreview:\n  maxFiles: 5\n`, 'utf-8');
 
     const config = await loadConfig(configPath);

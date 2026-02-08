@@ -147,7 +147,11 @@ async function readJsonBody(req: IncomingMessage): Promise<ReviewRequest> {
   return raw ? (JSON.parse(raw) as ReviewRequest) : {};
 }
 
-function sanitizeConfig(config: AppConfig) {
+type SanitizedConfig = Omit<AppConfig, 'llm'> & {
+  llm: Omit<AppConfig['llm'], 'apiKey'>;
+};
+
+function sanitizeConfig(config: AppConfig): SanitizedConfig {
   const { llm, network, review, output, git, server } = config;
   return {
     llm: {
@@ -559,13 +563,17 @@ function applySeverityFilter(result: ReviewResult, severity: ReviewRequest['seve
   };
 }
 
-async function listDirectories(targetPath?: string) {
+async function listDirectories(
+  targetPath?: string
+): Promise<{ path: string; parent: string | null; entries: Array<{ name: string; path: string }> }> {
   const resolved = path.resolve(targetPath || process.cwd());
+  // eslint-disable-next-line security/detect-non-literal-fs-filename
   const stats = await fs.stat(resolved);
   if (!stats.isDirectory()) {
     throw new Error('Path is not a directory');
   }
 
+  // eslint-disable-next-line security/detect-non-literal-fs-filename
   const entries = await fs.readdir(resolved, { withFileTypes: true });
   const directories = entries
     .filter((entry) => entry.isDirectory())
@@ -587,7 +595,7 @@ async function listDirectories(targetPath?: string) {
 export async function startServer(options: ServerOptions): Promise<UiServerHandle> {
   let uiHtml = '';
 
-  const server = createServer(async (req, res) => {
+  const handleRequest = async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
     if (!isLoopbackAddress(req.socket.remoteAddress)) {
       sendJson(res, 403, { ok: false, error: 'Forbidden' });
       return;
@@ -745,7 +753,9 @@ export async function startServer(options: ServerOptions): Promise<UiServerHandl
           );
         }
 
+        // eslint-disable-next-line security/detect-non-literal-fs-filename
         await fs.mkdir(path.dirname(resolvedPath), { recursive: true });
+        // eslint-disable-next-line security/detect-non-literal-fs-filename
         await fs.writeFile(resolvedPath, template, { flag: 'wx' });
         sendJson(res, 200, { ok: true, path: resolvedPath });
       } catch (error) {
@@ -855,6 +865,10 @@ export async function startServer(options: ServerOptions): Promise<UiServerHandl
     }
 
     sendJson(res, 404, { ok: false, error: 'Not found' });
+  };
+
+  const server = createServer((req, res) => {
+    void handleRequest(req, res);
   });
 
   await new Promise<void>((resolve, reject) => {
