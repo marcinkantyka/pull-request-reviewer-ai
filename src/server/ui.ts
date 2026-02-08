@@ -273,6 +273,20 @@ textarea {
   color: var(--muted);
 }
 
+.toggle.inline {
+  margin: 0;
+}
+
+.toggle-field {
+  display: grid;
+  gap: 6px;
+}
+
+.field-label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
 .actions {
   display: flex;
   gap: 10px;
@@ -2249,9 +2263,10 @@ window.addEventListener('unhandledrejection', (event) => {
                   <option value="md">md</option>
                 </select>
               </div>
-              <div>
-                <label class="toggle">
-                  <input id="outputColorize" type="checkbox" /> Colorize output
+              <div class="toggle-field">
+                <div class="field-label">Colorize output</div>
+                <label class="toggle inline">
+                  <input id="outputColorize" type="checkbox" /> Enabled
                 </label>
               </div>
             </div>
@@ -2303,22 +2318,25 @@ window.addEventListener('unhandledrejection', (event) => {
                   <option value="llm">llm</option>
                 </select>
               </div>
-              <div>
-                <label class="toggle">
-                  <input id="contextAware" type="checkbox" /> Context-aware review
+              <div class="toggle-field">
+                <div class="field-label">Context-aware review</div>
+                <label class="toggle inline">
+                  <input id="contextAware" type="checkbox" /> Enabled
                 </label>
               </div>
             </div>
 
             <div class="row">
-              <div>
-                <label class="toggle">
-                  <input id="groupByDirectory" type="checkbox" /> Group by directory
+              <div class="toggle-field">
+                <div class="field-label">Group by directory</div>
+                <label class="toggle inline">
+                  <input id="groupByDirectory" type="checkbox" /> Enabled
                 </label>
               </div>
-              <div>
-                <label class="toggle">
-                  <input id="groupByFeature" type="checkbox" /> Group by feature
+              <div class="toggle-field">
+                <div class="field-label">Group by feature</div>
+                <label class="toggle inline">
+                  <input id="groupByFeature" type="checkbox" /> Enabled
                 </label>
               </div>
             </div>
