@@ -17,6 +17,7 @@ If you find a bug, please open an issue using the [bug report template](.github/
 - Expected vs actual behavior
 - Environment details (OS, Node.js version, etc.)
 - Relevant logs or error messages
+- Whether the issue occurs in CLI, UI, or Docker
 
 ### Suggesting Features
 
@@ -159,12 +160,12 @@ pr-reviewer/
 │   │   ├── review/   # Review engine and analysis
 │   │   └── storage/  # Configuration storage and loading
 │   ├── formatters/   # Output formatters (JSON, Markdown, Terminal)
+│   ├── server/       # Local UI server and UI bundle
 │   ├── types/        # TypeScript type definitions
 │   └── utils/        # Utility functions (logger, validator, errors)
 ├── tests/            # Test files
 │   ├── unit/         # Unit tests
 │   └── integration/  # Integration tests
-├── config/           # Default configuration files
 ├── docker/           # Docker configuration and compose files
 └── examples/         # Usage examples and scripts
 ```

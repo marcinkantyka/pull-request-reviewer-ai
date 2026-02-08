@@ -6,6 +6,7 @@ export interface AnalyzeRequest {
   systemPrompt: string;
   userPrompt: string;
   temperature: number;
+  topP?: number;
   maxTokens?: number;
   model: string;
   seed?: number;

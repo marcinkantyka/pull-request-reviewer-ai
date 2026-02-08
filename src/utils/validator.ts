@@ -11,6 +11,7 @@ export const LLMConfigSchema = z.object({
   provider: z.enum(['ollama', 'vllm', 'llamacpp', 'openai-compatible', 'mock']),
   model: z.string().min(1),
   temperature: z.number().min(0).max(2),
+  topP: z.number().min(0).max(1).optional(),
   timeout: z.number().positive(),
   maxTokens: z.number().positive().optional(),
   apiKey: z.string().optional(),
@@ -31,6 +32,7 @@ export const ReviewConfigSchema = z.object({
   categories: z.array(
     z.enum(['security', 'bugs', 'performance', 'maintainability', 'style', 'bestPractices'])
   ),
+  projectContext: z.string().max(4000).optional(),
   includeAllFiles: z.boolean().optional(),
   changeSummaryMode: z.enum(['deterministic', 'llm']).optional(),
   contextAware: z.boolean().optional(),
@@ -52,12 +54,20 @@ export const GitConfigSchema = z.object({
   maxDiffSize: z.number().positive(),
 });
 
+export const ServerConfigSchema = z
+  .object({
+    host: z.string().min(1).optional(),
+    port: z.number().int().min(0).max(65535).optional(),
+  })
+  .optional();
+
 export const ConfigSchema = z.object({
   llm: LLMConfigSchema,
   network: NetworkConfigSchema,
   review: ReviewConfigSchema,
   output: OutputConfigSchema,
   git: GitConfigSchema,
+  server: ServerConfigSchema,
 });
 
 import type { AppConfig } from '../types/config.js';

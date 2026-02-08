@@ -25,6 +25,8 @@ Describe specific use cases or scenarios where this feature would be helpful:
 1. Use case 1: ...
 2. Use case 2: ...
 
+If this affects the UI, note any expected screens/fields and how the CLI should behave.
+
 ## Additional Context
 
 Add any other context, screenshots, or examples about the feature request here.

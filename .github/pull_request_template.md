@@ -35,6 +35,7 @@ Related to #
 
 - [ ] Unit tests added/updated
 - [ ] Integration tests added/updated
+- [ ] UI test steps included (if UI changes)
 - [ ] Manual testing performed
 
 ### Test Steps

@@ -25,6 +25,12 @@ Provide specific, actionable feedback with:
 - Clear explanation of the issue
 - Suggested fix or improvement
 
+Grounding rules:
+- Only report issues that are directly supported by the diff. If you cannot point to a concrete change, return [].
+- Do not invent vulnerabilities, bugs, or performance problems that are not evidenced in the diff.
+- For documentation or non-executable files (Markdown, README, .txt), only report documentation accuracy issues (incorrect commands, mismatched options, contradictory instructions).
+- Documentation-only issues must be low or info severity.
+
 Format response as JSON array of issues. Only include actual issues. If the changes look good, return empty array [].`;
 
 export const CHANGE_SUMMARY_SYSTEM_PROMPT = `You are summarizing code changes between two git branches for a developer.
@@ -32,18 +38,53 @@ export const CHANGE_SUMMARY_SYSTEM_PROMPT = `You are summarizing code changes be
 Be concise, factual, and deterministic. Do not invent details that are not in the diff excerpts or file list.
 If a conclusion is uncertain, say so clearly. Use a neutral, technical tone.`;
 
+function buildProjectContext(projectContext?: string): string {
+  const context = projectContext ? projectContext.trim() : '';
+  if (!context) {
+    return '';
+  }
+  return `Project context:\n${context}\n\n`;
+}
+
+function isDocumentationFile(filePath: string, language: string): boolean {
+  const lowerPath = filePath.toLowerCase();
+  const lowerLang = language.toLowerCase();
+  if (lowerLang === 'markdown') {
+    return true;
+  }
+  return (
+    lowerPath.endsWith('.md') ||
+    lowerPath.endsWith('.mdx') ||
+    lowerPath.endsWith('.markdown') ||
+    lowerPath.endsWith('.rst') ||
+    lowerPath.endsWith('.adoc') ||
+    lowerPath.endsWith('.txt')
+  );
+}
+
+function buildDocGuidance(filePath: string, language: string): string {
+  if (!isDocumentationFile(filePath, language)) {
+    return '';
+  }
+  return `Documentation guidance:
+- Only flag incorrect commands, wrong config values, or contradictory instructions.
+- Do NOT report runtime bugs, security vulnerabilities, or performance issues unless the diff explicitly changes executable code blocks or commands.
+- If no concrete documentation issue exists, return [].\n\n`;
+}
+
 export function createReviewPrompt(
   filePath: string,
   language: string,
   diff: string,
-  description?: string
+  projectContext?: string
 ): string {
+  const contextBlock = buildProjectContext(projectContext);
+  const docGuidance = buildDocGuidance(filePath, language);
   return `Review the following code changes:
 
 File: ${filePath}
 Language: ${language}
-${description ? `Context: ${description}\n` : ''}
-Diff:
+${contextBlock}${docGuidance}Diff:
 \`\`\`diff
 ${diff}
 \`\`\`
@@ -54,7 +95,7 @@ Provide review feedback as a JSON array with this structure:
     "line": number,
     "severity": "critical" | "high" | "medium" | "low" | "info",
     "category": "security" | "bugs" | "performance" | "maintainability" | "style" | "bestPractices",
-    "message": "Clear description of the issue",
+    "message": "Clear description of the issue (must cite a specific change from the diff)",
     "suggestion": "Specific recommendation to fix"
   }
 ]
@@ -69,7 +110,8 @@ Be concise but thorough. Focus on real problems, not style preferences.`;
 export function createGroupReviewPrompt(
   files: Array<{ filePath: string; language: string; diff: string }>,
   groupType: 'directory' | 'feature',
-  context?: string
+  context?: string,
+  projectContext?: string
 ): string {
   const filesSection = files
     .map(
@@ -88,9 +130,18 @@ ${file.diff}
       ? `These files are part of the same feature/module: ${context}`
       : `These files are in the same directory: ${context}`;
 
+  const projectContextBlock = buildProjectContext(projectContext);
+  const containsDocs = files.some((file) => isDocumentationFile(file.filePath, file.language));
+  const docNote = containsDocs
+    ? `Documentation guidance:
+- Some files are documentation. Only report documentation accuracy issues for those files.
+- Do NOT invent runtime issues for documentation-only diffs.
+- Documentation-only issues must be low or info severity.\n\n`
+    : '';
+
   return `Review the following related code changes together. These files are part of the same change set and should be analyzed for cross-file consistency, dependencies, and architectural patterns.
 
-${contextNote}
+${projectContextBlock}${docNote}${contextNote}
 
 ${filesSection}
 
@@ -122,7 +173,11 @@ Focus on real problems, especially cross-file issues that wouldn't be caught in 
 /**
  * Creates a change summary prompt
  */
-export function createChangeSummaryPrompt(diffs: DiffInfo[], summary: ChangeSummaryStats): string {
+export function createChangeSummaryPrompt(
+  diffs: DiffInfo[],
+  summary: ChangeSummaryStats,
+  projectContext?: string
+): string {
   const fileList = diffs
     .map((diff) => {
       const changeType = diff.changeType || 'modified';
@@ -152,9 +207,11 @@ export function createChangeSummaryPrompt(diffs: DiffInfo[], summary: ChangeSumm
       ? `Some diffs were omitted due to size (${excerpts.omittedCount} file(s) not shown).`
       : 'All diffs are included below.';
 
+  const projectContextBlock = buildProjectContext(projectContext);
+
   return `Summarize the change set for a developer. Describe what changed in the application between the two branches.
 
-Summary stats:
+${projectContextBlock}Summary stats:
 - Files changed: ${summary.totals.files}
 - Added: ${summary.totals.added}
 - Deleted: ${summary.totals.deleted}

@@ -8,7 +8,9 @@ import { createCompareCommand } from './commands/compare.js';
 import { createReviewCommand } from './commands/review.js';
 import { createConfigCommand } from './commands/config.js';
 import { logger } from '../utils/logger.js';
+import { startServer } from '../server/index.js';
 import { readFileSync, existsSync } from 'fs';
+import net from 'node:net';
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
 
@@ -47,18 +49,90 @@ function readPackageVersion(): string {
   }
 }
 
-const version = readPackageVersion();
+async function main(): Promise<void> {
+  const version = readPackageVersion();
+  const defaultHost = process.env.UI_HOST || '127.0.0.1';
+  const defaultPort = process.env.UI_PORT || '47831';
+  const rawArgs = process.argv.slice(2);
 
-const program = new Command();
+  const getOptionValue = (flag: string, fallback: string): string => {
+    const index = rawArgs.indexOf(flag);
+    if (index === -1) {
+      return fallback;
+    }
+    const value = rawArgs[index + 1];
+    if (!value || value.startsWith('-')) {
+      return fallback;
+    }
+    return value;
+  };
 
-program
-  .name('pr-review')
-  .description('Offline-first Pull Request review CLI tool using local LLM')
-  .version(version);
+  const resolvePort = async (host: string, desiredPort: number): Promise<number> => {
+    if (desiredPort === 0) {
+      return 0;
+    }
 
-program.addCommand(createCompareCommand());
-program.addCommand(createReviewCommand());
-program.addCommand(createConfigCommand());
+    return new Promise((resolve) => {
+      const tester = net
+        .createServer()
+        .once('error', () => resolve(0))
+        .once('listening', () => {
+          tester.close(() => resolve(desiredPort));
+        })
+        .listen(desiredPort, host);
+    });
+  };
+
+  if (rawArgs.includes('--server')) {
+    const host = getOptionValue('--host', defaultHost);
+    const portRaw = getOptionValue('--port', defaultPort);
+    const hasCommand = rawArgs.some((arg, index) => {
+      if (arg.startsWith('-')) {
+        return false;
+      }
+      const prev = rawArgs[index - 1];
+      if (prev === '--host' || prev === '--port') {
+        return false;
+      }
+      return true;
+    });
+
+    if (hasCommand) {
+      console.error('Error: --server cannot be combined with other commands.');
+      process.exit(1);
+    }
+
+    const parsedPort = Number.parseInt(portRaw, 10);
+    const desiredPort = Number.isNaN(parsedPort) ? 0 : parsedPort;
+    const port = await resolvePort(host, desiredPort);
+    await startServer({
+      host,
+      port,
+      version,
+    });
+    return;
+  }
+  const program = new Command();
+
+  program
+    .name('pr-review')
+    .description('Offline-first Pull Request review CLI tool using local LLM')
+    .version(version)
+    .option('--server', 'Start local UI server')
+    .option('--host <host>', 'Server host (default: 127.0.0.1)', defaultHost)
+    .option('--port <port>', 'Server port (default: 0 for random)', defaultPort);
+
+  program.addCommand(createCompareCommand());
+  program.addCommand(createReviewCommand());
+  program.addCommand(createConfigCommand());
+
+  program.parse();
+
+  if (!rawArgs.length) {
+    program.outputHelp();
+    process.exit(0);
+  }
+}
 
 process.on('unhandledRejection', (error) => {
   logger.error(
@@ -75,9 +149,8 @@ process.on('uncaughtException', (error) => {
   process.exit(1);
 });
 
-program.parse();
-
-if (!process.argv.slice(2).length) {
-  program.outputHelp();
-  process.exit(0);
-}
+main().catch((error) => {
+  logger.error({ error: error instanceof Error ? error.message : String(error) }, 'CLI failed');
+  console.error('Error:', error instanceof Error ? error.message : String(error));
+  process.exit(1);
+});
