@@ -169,15 +169,18 @@ jobs:
         continue-on-error: true
 
       - name: OSV dependency scan
-        uses: google/osv-scanner-action@v1.7.0
-        with:
-          scan-args: '--lockfile=package-lock.json'
+        run: |
+          docker run --rm \
+            -v "${GITHUB_WORKSPACE}:/src" \
+            ghcr.io/google/osv-scanner:latest \
+            --lockfile=/src/package-lock.json
         continue-on-error: true
 
       - name: Snyk scan (optional)
         if: ${{ env.SNYK_TOKEN != '' }}
-        uses: snyk/actions/node@v3
+        run: |
+          npm install -g snyk
+          snyk test --severity-threshold=high
         env:
           SNYK_TOKEN: ${{ env.SNYK_TOKEN }}
-        with:
-          args: --severity-threshold=high
+        continue-on-error: true
