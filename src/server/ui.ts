@@ -172,6 +172,11 @@ code, pre, .mono {
   gap: 20px;
 }
 
+.section-stack {
+  display: grid;
+  gap: 20px;
+}
+
 .panel {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -296,6 +301,31 @@ button:disabled {
   white-space: pre-wrap;
 }
 
+.summary-box {
+  background: #f9fbfc;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
+  word-break: break-word;
+}
+
+.summary-box p {
+  margin: 0 0 8px 0;
+}
+
+.summary-box ul {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+}
+
+.summary-box li {
+  margin-bottom: 4px;
+}
+
 .summary {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -356,6 +386,17 @@ button:disabled {
   font-size: 13px;
 }
 
+.issue-code {
+  margin-top: 8px;
+  background: #f4f6f8;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-size: 12px;
+  color: #2c3e50;
+  white-space: pre-wrap;
+}
+
 .file-block {
   margin-top: 14px;
   border: 1px solid var(--border);
@@ -366,6 +407,26 @@ button:disabled {
 .file-block h4 {
   margin: 0 0 8px 0;
   font-size: 14px;
+}
+
+.settings-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+
+.settings-row:last-child {
+  border-bottom: none;
+}
+
+.settings-row span {
+  color: var(--muted);
+}
+
+.settings-row strong {
+  font-weight: 600;
 }
 
 .browser {
@@ -463,6 +524,7 @@ const state = {
   version: ${JSON.stringify(options.version)},
   server: ${JSON.stringify({ host: options.host, port: options.port })},
   cwd: '',
+  history: [],
 };
 
 const byId = (id) => document.getElementById(id);
@@ -502,6 +564,9 @@ const browserPathEl = byId('browserPath');
 const browserUpEl = byId('browserUp');
 const browserSelectEl = byId('browserSelect');
 const browserCloseEl = byId('browserClose');
+const historyListEl = byId('historyList');
+const settingsListEl = byId('settingsList');
+const navButtons = document.querySelectorAll('.nav button[data-target]');
 let browserCurrentPath = '';
 let browserParentPath = null;
 
@@ -548,6 +613,96 @@ function buildCommandPreview() {
 
 function updatePreview() {
   previewEl.textContent = buildCommandPreview();
+}
+
+function setActiveNav(targetId) {
+  navButtons.forEach((button) => {
+    const isActive = button.dataset.target === targetId;
+    button.classList.toggle('active', isActive);
+  });
+}
+
+function scrollToPanel(targetId) {
+  const panel = document.getElementById(targetId);
+  if (panel) {
+    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+function renderChangeSummary(narrative) {
+  changeSummaryEl.innerHTML = '';
+  const lines = String(narrative || '').split('\\n').map((line) => line.trim()).filter(Boolean);
+  if (lines.length === 0) {
+    changeSummaryEl.textContent = 'No change summary available.';
+    return;
+  }
+
+  const intro = document.createElement('p');
+  intro.textContent = lines[0];
+  changeSummaryEl.appendChild(intro);
+
+  if (lines.length > 1) {
+    const list = document.createElement('ul');
+    lines.slice(1).forEach((line) => {
+      const item = document.createElement('li');
+      item.textContent = line.replace(/^[-•]\\s*/, '');
+      list.appendChild(item);
+    });
+    changeSummaryEl.appendChild(list);
+  }
+}
+
+function renderHistory() {
+  historyListEl.innerHTML = '';
+  if (!state.history.length) {
+    historyListEl.innerHTML = '<p class="muted">No reviews yet.</p>';
+    return;
+  }
+
+  state.history.slice().reverse().forEach((entry) => {
+    const row = document.createElement('div');
+    row.className = 'file-block';
+
+    const title = document.createElement('h4');
+    title.textContent = entry.title;
+    const meta = document.createElement('div');
+    meta.className = 'muted';
+    meta.textContent = entry.meta;
+
+    row.appendChild(title);
+    row.appendChild(meta);
+    historyListEl.appendChild(row);
+  });
+}
+
+function renderSettings() {
+  settingsListEl.innerHTML = '';
+  if (!state.defaults) {
+    settingsListEl.innerHTML = '<p class="muted">Settings are not available.</p>';
+    return;
+  }
+
+  const items = [
+    { label: 'LLM endpoint', value: state.defaults.llm.endpoint },
+    { label: 'LLM provider', value: state.defaults.llm.provider },
+    { label: 'LLM model', value: state.defaults.llm.model },
+    { label: 'Timeout (ms)', value: state.defaults.llm.timeout },
+    { label: 'Max files', value: state.defaults.review.maxFiles },
+    { label: 'Include all files', value: state.defaults.review.includeAllFiles ? 'true' : 'false' },
+    { label: 'Allowed hosts', value: (state.defaults.network.allowedHosts || []).join(', ') },
+  ];
+
+  items.forEach((item) => {
+    const row = document.createElement('div');
+    row.className = 'settings-row';
+    const label = document.createElement('span');
+    label.textContent = item.label;
+    const value = document.createElement('strong');
+    value.textContent = String(item.value);
+    row.appendChild(label);
+    row.appendChild(value);
+    settingsListEl.appendChild(row);
+  });
 }
 
 async function loadModels() {
@@ -643,8 +798,13 @@ async function loadDefaults() {
   fields.timeout.value = String(Math.round((llm.timeout || 60000) / 1000));
   fields.includeAll.checked = review.includeAllFiles ?? false;
   fields.mode.value = 'base';
+  if (!fields.repoPath.value.trim() && state.cwd) {
+    fields.repoPath.value = state.cwd;
+  }
 
+  updateModeFields();
   updatePreview();
+  renderSettings();
   loadModels();
 }
 
@@ -675,7 +835,7 @@ function renderResults(result) {
     narrative +=
       ' No committed changes detected between branches. If you expected changes, commit them or switch branches.';
   }
-  changeSummaryEl.textContent = narrative;
+  renderChangeSummary(narrative);
 
   issuesEl.innerHTML = '';
   if (!result.files || result.files.length === 0) {
@@ -711,16 +871,31 @@ function renderResults(result) {
       badge.textContent = String(severity).toUpperCase();
 
       const strong = document.createElement('strong');
-      strong.textContent = issue.title || issue.category || 'Issue';
+      strong.textContent = issue.category || 'Issue';
 
       header.appendChild(badge);
       header.appendChild(strong);
 
       const desc = document.createElement('p');
-      desc.textContent = issue.description || '';
+      const message = issue.message || '';
+      desc.textContent = message || 'No description provided.';
 
       issueEl.appendChild(header);
       issueEl.appendChild(desc);
+
+      if (issue.suggestion) {
+        const suggestion = document.createElement('p');
+        suggestion.className = 'muted';
+        suggestion.textContent = 'Suggestion: ' + issue.suggestion;
+        issueEl.appendChild(suggestion);
+      }
+
+      if (issue.code) {
+        const code = document.createElement('pre');
+        code.className = 'issue-code mono';
+        code.textContent = issue.code;
+        issueEl.appendChild(code);
+      }
       block.appendChild(issueEl);
     });
 
@@ -774,6 +949,18 @@ async function runReview(event) {
 
   setStatus('Review completed.', 'success');
   renderResults(data.result);
+
+  state.history.push({
+    title: data.result.metadata.sourceBranch + ' → ' + data.result.metadata.targetBranch,
+    meta:
+      new Date(data.result.metadata.timestamp).toLocaleString() +
+      ' · ' +
+      data.result.summary.totalIssues +
+      ' issues',
+  });
+  renderHistory();
+  setActiveNav('resultsPanel');
+  scrollToPanel('resultsPanel');
 }
 
 byId('reviewForm').addEventListener('submit', runReview);
@@ -816,7 +1003,18 @@ useCwdButtonEl.addEventListener('click', () => {
   }
 });
 
+navButtons.forEach((button) => {
+  button.addEventListener('click', () => {
+    const target = button.dataset.target;
+    if (target) {
+      setActiveNav(target);
+      scrollToPanel(target);
+    }
+  });
+});
+
 updateModeFields();
+renderHistory();
 loadDefaults();
 `;
 
@@ -836,10 +1034,10 @@ loadDefaults();
         <span class="tag">Local UI · v${options.version}</span>
       </div>
       <div class="nav">
-        <button class="active">Run Review</button>
-        <button disabled style="opacity:.5">Results</button>
-        <button disabled style="opacity:.5">History</button>
-        <button disabled style="opacity:.5">Settings</button>
+        <button class="active" data-target="inputsPanel">Run Review</button>
+        <button data-target="resultsPanel">Results</button>
+        <button data-target="historyPanel">History</button>
+        <button data-target="settingsPanel">Settings</button>
       </div>
       <div class="version">Server: http://${options.host}:${options.port}</div>
     </aside>
@@ -856,8 +1054,9 @@ loadDefaults();
         </div>
       </div>
 
-      <div class="grid">
-        <section class="panel">
+      <div class="section-stack">
+        <div class="grid">
+        <section class="panel" id="inputsPanel">
           <h3>Review Inputs</h3>
           <form id="reviewForm" class="form-grid">
             <div>
@@ -964,14 +1163,25 @@ loadDefaults();
           </form>
         </section>
 
-        <section class="panel">
+        <section class="panel" id="resultsPanel">
           <h3>Results</h3>
           <div id="results" class="hidden">
             <div class="summary" id="summary"></div>
-            <div class="preview mono" id="changeSummary"></div>
+            <div class="summary-box" id="changeSummary"></div>
             <div id="issues"></div>
           </div>
           <div class="muted" id="emptyState">Run a review to see results.</div>
+        </section>
+        </div>
+
+        <section class="panel" id="historyPanel">
+          <h3>History</h3>
+          <div id="historyList"></div>
+        </section>
+
+        <section class="panel" id="settingsPanel">
+          <h3>Settings</h3>
+          <div id="settingsList"></div>
         </section>
       </div>
     </main>
